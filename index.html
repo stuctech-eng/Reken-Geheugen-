@@ -1,349 +1,261 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Solitaire Pro Physics</title>
-    <style>
-        :root {
-            --card-w: 85px;
-            --card-h: 125px;
-            --bg: radial-gradient(circle at center, #1a4a2e 0%, #0d2b1a 100%);
-        }
-
-        body {
-            margin: 0;
-            background: #0d2b1a;
-            background: var(--bg);
-            overflow: hidden;
-            font-family: -apple-system, system-ui, sans-serif;
-            touch-action: none;
-        }
-
-        #table {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            perspective: 1200px;
-            overflow: hidden;
-        }
-
-        .slot {
-            position: absolute;
-            width: var(--card-w);
-            height: var(--card-h);
-            border-radius: 8px;
-            border: 2px solid rgba(255,255,255,0.05);
-            background: rgba(0,0,0,0.1);
-            pointer-events: none;
-        }
-
-        .card {
-            position: absolute;
-            width: var(--card-w);
-            height: var(--card-h);
-            transform-style: preserve-3d;
-            will-change: transform;
-            cursor: pointer;
-            z-index: 10;
-        }
-
-        .inner {
-            width: 100%; height: 100%;
-            transform-style: preserve-3d;
-            pointer-events: none;
-        }
-
-        .face {
-            position: absolute;
-            width: 100%; height: 100%;
-            backface-visibility: hidden;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: flex-start;
-            background: white;
-            padding: 8px;
-            box-sizing: border-box;
-            font-size: 20px;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        .back {
-            transform: rotateY(180deg);
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            border: 3px solid white;
-            box-sizing: border-box;
-        }
-
-        .back::after {
-            content: "";
-            position: absolute; inset: 5px;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 4px;
-        }
-
-        .red { color: #e74c3c; }
-        .black { color: #2c3e50; }
-
-        .suit-large {
-            align-self: center;
-            margin-top: 10px;
-            font-size: 40px;
-        }
-
-        #ui {
-            position: fixed; bottom: 30px; width: 100%;
-            display: flex; justify-content: center; gap: 20px;
-            z-index: 2000;
-        }
-
-        .btn {
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white; padding: 12px 24px;
-            border-radius: 20px; font-weight: bold;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Solitaire Neeltje Luxe v3</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root {
+    --bg: #070b14;
+    --accent: #f5c840;
+    --red: #ff3b6b;
+    --black: #2c3e50;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+body, html {
+    width: 100%; height: 100%;
+    font-family: -apple-system, system-ui, sans-serif;
+    background: var(--bg); overflow: hidden; color: #fff;
+}
+#app {
+    display: none; height: 100vh; flex-direction: column;
+    background: radial-gradient(circle at 20% 20%, #1a2d66 0%, transparent 40%), linear-gradient(180deg, #070b18, #05060a);
+}
+#header {
+    display: flex; justify-content: space-around; padding: 12px;
+    background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.stat { text-align: center; }
+.stat b { font-size: 10px; color: var(--accent); display: block; text-transform: uppercase; }
+.stat span { font-size: 18px; font-weight: 800; }
+#nav { display: flex; gap: 8px; padding: 8px; background: rgba(0,0,0,0.2); }
+.btn {
+    flex: 1; padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05); color: #fff; font-weight: bold; font-size: 11px;
+}
+#board { flex: 1; position: relative; margin: 10px; }
+.slot {
+    position: absolute; border-radius: 10px;
+    border: 2px dashed rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.02);
+}
+.card {
+    position: absolute; border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    transition: transform 0.1s; touch-action: none;
+}
+.card.up { background: #fff; border: 1px solid #ddd; color: #000; }
+.card.dn { background: linear-gradient(145deg, #1a3fbf, #0a1870); border: 2px solid #fff; }
+.card-content { position: relative; width: 100%; height: 100%; padding: 5px; pointer-events: none; }
+.rank { font-size: 16px; font-weight: 900; line-height: 1.1; }
+.suit-mid { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 35px; opacity: 0.15; }
+.red { color: var(--red); }
+.black { color: var(--black); }
+.dragging { z-index: 1000 !important; transform: scale(1.05); opacity: 0.9; }
+#menu {
+    position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; background: var(--bg); gap: 20px;
+}
+.opt { width: 280px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+</style>
 </head>
 <body>
 
-<div id="table"></div>
-<div id="ui">
-    <button class="btn" onclick="location.reload()">Reset</button>
+<div id="menu">
+    <h1 style="letter-spacing: 4px;">SOLITAIRE</h1>
+    <div class="opt" onclick="start(1)"><h2>MAKKELIJK</h2><p>1 kaart trekken</p></div>
+    <div class="opt" onclick="start(3)"><h2>MOEILIJK</h2><p>3 kaarten trekken</p></div>
+</div>
+
+<div id="app">
+    <div id="header">
+        <div class="stat"><b>Tijd</b><span id="time">0:00</span></div>
+        <div class="stat"><b>Score</b><span id="score">0</span></div>
+        <div class="stat"><b>Zetten</b><span id="moves">0</span></div>
+    </div>
+    <div id="nav">
+        <button class="btn" onclick="location.reload()">MENU</button>
+        <button class="btn" onclick="init()">NIEUW</button>
+    </div>
+    <div id="board"></div>
 </div>
 
 <script>
-const SUITS = [
-    { s: '♠', c: 'black' }, { s: '♥', c: 'red' },
-    { s: '♦', c: 'red' }, { s: '♣', c: 'black' }
-];
-const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+const S = ['♠', '♥', '♦', '♣'], R = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+let stock = [], waste = [], found = [[],[],[],[]], tab = [[],[],[],[],[],[],[]];
+let diff = 1, score = 0, moves = 0, secs = 0, timer = null, cw, ch, gap = 8, dragInfo = null;
 
-class Card {
-    constructor(suit, rank, el) {
-        this.el = el;
-        this.suit = suit;
-        this.rank = rank;
-        this.rankIdx = RANKS.indexOf(rank);
-
-        this.x = 20; this.y = 20;
-        this.vx = 0; this.vy = 0;
-        this.targetX = 20; this.targetY = 20;
-
-        this.rz = 0; // Rotation Z
-        this.ry = 180; // Flip (180 is back)
-        this.targetRy = 180;
-        
-        this.scale = 1;
-        this.delay = 0;
-        this.isDragging = false;
-        this.faceUp = false;
-    }
-
-    update(dt) {
-        if (this.delay > 0) {
-            this.delay -= dt;
-            return;
-        }
-
-        // Spring Physics
-        let spring = this.isDragging ? 0.15 : 0.04;
-        let friction = this.isDragging ? 0.65 : 0.82;
-
-        let dx = this.targetX - this.x;
-        let dy = this.targetY - this.y;
-
-        this.vx += dx * spring;
-        this.vy += dy * spring;
-        this.vx *= friction;
-        this.vy *= friction;
-
-        this.x += this.vx;
-        this.y += this.vy;
-
-        // Flip animation
-        let dry = this.targetRy - this.ry;
-        this.ry += dry * 0.1;
-
-        // Scale effect based on movement
-        let speed = Math.abs(this.vx) + Math.abs(this.vy);
-        let targetScale = this.isDragging ? 1.15 : 1;
-        this.scale += (targetScale - this.scale) * 0.2;
-
-        this.render();
-    }
-
-    render() {
-        this.el.style.transform = `translate3d(${this.x}px, ${this.y}px, ${this.isDragging ? 100 : 0}px) rotateZ(${this.rz}deg) scale(${this.scale})`;
-        this.el.querySelector(".inner").style.transform = `rotateY(${this.ry}deg)`;
-        
-        // Dynamic shadow based on height/speed
-        let shadow = this.isDragging ? 30 : Math.min(speed * 2, 10);
-        this.el.style.filter = `drop-shadow(0 ${shadow}px ${shadow/2}px rgba(0,0,0,0.4))`;
-    }
-
-    moveTo(x, y, delay = 0) {
-        this.targetX = x;
-        this.targetY = y;
-        this.delay = delay;
-    }
-
-    flip(up, delay = 0) {
-        this.faceUp = up;
-        setTimeout(() => {
-            this.targetRy = up ? 0 : 180;
-        }, delay);
-    }
+function start(d) {
+    diff = d; document.getElementById('menu').style.display = 'none';
+    document.getElementById('app').style.display = 'flex'; init();
 }
 
-const Engine = {
-    cards: [],
-    piles: {
-        deck: [],
-        waste: [],
-        foundation: [[], [], [], []],
-        tableau: [[], [], [], [], [], [], []]
-    },
-    
-    init() {
-        this.table = document.getElementById("table");
-        this.setupBoard();
-        this.createDeck();
-        this.deal();
-        this.loop();
-        this.setupInputs();
-    },
+function init() {
+    score = 0; moves = 0; secs = 0; clearInterval(timer);
+    timer = setInterval(() => { secs++; let m=Math.floor(secs/60), s=secs%60; document.getElementById('time').textContent=`${m}:${s<10?'0':''}${s}`; }, 1000);
+    let deck = []; S.forEach(s => R.forEach(r => deck.push({s, r, up: false})));
+    deck.sort(() => Math.random() - 0.5);
+    tab = Array.from({length:7}, (_,i) => deck.splice(0, i+1));
+    tab.forEach(col => col[col.length-1].up = true);
+    stock = deck; waste = []; found = [[],[],[],[]];
+    render();
+}
 
-    setupBoard() {
-        const margin = 15;
-        const spacing = 100;
-        
-        // Foundation slots
-        for(let i=0; i<4; i++) {
-            this.createSlot(margin + (i+3) * spacing, margin);
-        }
-        // Tableau slots
-        for(let i=0; i<7; i++) {
-            this.createSlot(margin + i * spacing, margin + 150);
-        }
-    },
-
-    createSlot(x, y) {
-        const slot = document.createElement("div");
-        slot.className = "slot";
-        slot.style.left = x + "px";
-        slot.style.top = y + "px";
-        this.table.appendChild(slot);
-    },
-
-    createDeck() {
-        let deckData = [];
-        SUITS.forEach(s => RANKS.forEach(r => deckData.push({s, r})));
-        deckData = deckData.sort(() => Math.random() - 0.5);
-
-        deckData.forEach(data => {
-            const el = document.createElement("div");
-            el.className = "card";
-            el.innerHTML = `
-                <div class="inner">
-                    <div class="face ${data.s.c}">
-                        <span>${data.r}${data.s.s}</span>
-                        <div class="suit-large">${data.s.s}</div>
-                    </div>
-                    <div class="face back"></div>
-                </div>
-            `;
-            this.table.appendChild(el);
-            const card = new Card(data.s, data.r, el);
-            this.cards.push(card);
-            this.piles.deck.push(card);
+function render() {
+    const b = document.getElementById('board'); b.innerHTML = '';
+    cw = (b.clientWidth - (6 * gap)) / 7; ch = cw * 1.45;
+    for(let i=0; i<7; i++){
+        let s = document.createElement('div'); s.className = 'slot'; 
+        s.style.width = cw+'px'; s.style.height = ch+'px';
+        s.style.left = (i*(cw+gap))+'px'; b.appendChild(s);
+    }
+    if(stock.length > 0) {
+        let k = createK({up:false}, 6*(cw+gap), 0);
+        k.onclick = drawStock; b.appendChild(k);
+    } else {
+        let r = document.createElement('div'); r.className = 'slot';
+        r.style.width = cw+'px'; r.style.height = ch+'px'; r.style.left = 6*(cw+gap)+'px';
+        r.onclick = () => { stock = waste.reverse().map(c=>({...c,up:false})); waste=[]; render(); };
+        b.appendChild(r);
+    }
+    if(waste.length > 0) {
+        let k = createK(waste[waste.length-1], 5*(cw+gap), 0);
+        attachDrag(k, {type:'waste'}); b.appendChild(k);
+    }
+    tab.forEach((col, x) => {
+        let yPos = ch + gap;
+        col.forEach((card, y) => {
+            let k = createK(card, x*(cw+gap), yPos);
+            if(card.up) attachDrag(k, {type:'tab', x, y});
+            else if(y === col.length-1) k.onclick = () => { card.up=true; score+=5; render(); };
+            b.appendChild(k);
+            yPos += card.up ? cw*0.35 : cw*0.15;
         });
-    },
+    });
+    found.forEach((f, i) => {
+        if(f.length > 0) {
+            let k = createK(f[f.length-1], i*(cw+gap), 0);
+            attachDrag(k, {type:'found', i}); b.appendChild(k);
+        }
+    });
+}
 
-    deal() {
-        let stagger = 0;
-        for (let i = 0; i < 7; i++) {
-            for (let j = i; j < 7; j++) {
-                const card = this.piles.deck.pop();
-                this.piles.tableau[j].push(card);
-                
-                const tx = 15 + j * 100;
-                const ty = 165 + (this.piles.tableau[j].length - 1) * 25;
-                
-                card.rz = Math.random() * 4 - 2;
-                card.moveTo(tx, ty, stagger);
-                
-                if (i === j) {
-                    card.flip(true, stagger + 300);
+function createK(card, x, y) {
+    const el = document.createElement('div');
+    el.className = `card ${card.up ? 'up' : 'dn'}`;
+    el.style.width = cw+'px'; el.style.height = ch+'px';
+    el.style.left = x+'px'; el.style.top = y+'px';
+    if(card.up) {
+        const red = card.s==='♥'||card.s==='♦';
+        el.innerHTML = `<div class="card-content ${red?'red':'black'}"><div class="rank">${card.r}<br>${card.s}</div><div class="suit-mid">${card.s}</div></div>`;
+    }
+    return el;
+}
+
+function drawStock() {
+    let n = diff === 3 ? Math.min(3, stock.length) : 1;
+    for(let i=0; i<n; i++) { if(stock.length>0) { let c = stock.pop(); c.up = true; waste.push(c); } }
+    moves++; render();
+}
+
+function attachDrag(el, info) {
+    el.onpointerdown = (e) => {
+        if(e.button !== 0 && e.pointerType !== 'touch') return;
+        // Foundation check on single tap/click
+        let clickTimer = setTimeout(() => {
+            if(!dragInfo) return;
+            dragInfo.isDragging = true;
+        }, 150);
+
+        dragInfo = { 
+            el, info, startX: e.clientX, startY: e.clientY,
+            origX: parseFloat(el.style.left), origY: parseFloat(el.style.top),
+            cards: [], isDragging: false
+        };
+        if(info.type === 'tab') {
+            dragInfo.cards = Array.from(document.querySelectorAll('.card')).filter(c => 
+                parseFloat(c.style.left) === dragInfo.origX && parseFloat(c.style.top) >= dragInfo.origY
+            );
+        } else { dragInfo.cards = [el]; }
+        dragInfo.cards.forEach(c => c.classList.add('dragging'));
+        el.setPointerCapture(e.pointerId);
+    };
+
+    el.onpointermove = (e) => {
+        if(!dragInfo || !dragInfo.isDragging) return;
+        let dx = e.clientX - dragInfo.startX, dy = e.clientY - dragInfo.startY;
+        dragInfo.cards.forEach(c => {
+            c.style.left = (parseFloat(c.dataset.ox || c.style.left) + dx) + 'px';
+            c.style.top = (parseFloat(c.dataset.oy || c.style.top) + dy) + 'px';
+            if(!c.dataset.ox) { c.dataset.ox = parseFloat(c.style.left) - dx; c.dataset.oy = parseFloat(c.style.top) - dy; }
+        });
+    };
+
+    el.onpointerup = (e) => {
+        if(!dragInfo) return;
+        let dx = Math.abs(e.clientX - dragInfo.startX);
+        let dy = Math.abs(e.clientY - dragInfo.startY);
+        
+        if(dx < 5 && dy < 5) { // Click/Tap detected
+            for(let i=0; i<4; i++) {
+                if(isValidFoundation(dragInfo.info, i)) {
+                    executeFoundation(dragInfo.info, i);
+                    dragInfo = null; render(); return;
                 }
-                stagger += 60;
             }
         }
-    },
 
-    setupInputs() {
-        let activeCard = null;
-        let offsetX, offsetY;
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        const slot = target ? target.closest('.slot, .card') : null;
+        if(slot) {
+            let tx = Math.round(parseFloat(slot.style.left) / (cw + gap));
+            if(isValidMove(dragInfo.info, tx)) executeMove(dragInfo.info, tx);
+        }
+        dragInfo = null; render();
+    };
+}
 
-        window.addEventListener('pointerdown', e => {
-            const el = e.target.closest('.card');
-            if (!el) return;
+function isValidMove(src, tx) {
+    let card = getCard(src); if(!card || tx<0 || tx>6) return false;
+    let targetCol = tab[tx];
+    if(targetCol.length === 0) return card.r === 'K';
+    let top = targetCol[targetCol.length-1];
+    return isRed(card) !== isRed(top) && R.indexOf(card.r) === R.indexOf(top.r) - 1;
+}
 
-            activeCard = this.cards.find(c => c.el === el);
-            if (!activeCard || !activeCard.faceUp) return;
+function isValidFoundation(src, fi) {
+    let card = getCard(src); if(!card) return false;
+    if(src.type === 'tab' && tab[src.x].length - 1 !== src.y) return false;
+    let target = found[fi];
+    if(target.length === 0) return card.r === 'A';
+    let top = target[target.length-1];
+    return card.s === top.s && R.indexOf(card.r) === R.indexOf(top.r) + 1;
+}
 
-            activeCard.isDragging = true;
-            offsetX = e.clientX - activeCard.x;
-            offsetY = e.clientY - activeCard.y;
-        });
+function executeMove(src, tx) {
+    let cards = [];
+    if(src.type === 'waste') cards = [waste.pop()];
+    else if(src.type === 'tab') cards = tab[src.x].splice(src.y);
+    else if(src.type === 'found') cards = [found[src.i].pop()];
+    tab[tx].push(...cards); moves++; score += 5;
+}
 
-        window.addEventListener('pointermove', e => {
-            if (!activeCard) return;
-            activeCard.targetX = e.clientX - offsetX;
-            activeCard.targetY = e.clientY - offsetY;
-        });
+function executeFoundation(src, fi) {
+    let card = (src.type === 'waste') ? waste.pop() : (src.type === 'tab' ? tab[src.x].pop() : found[src.i].pop());
+    found[fi].push(card); moves++; score += 10;
+}
 
-        window.addEventListener('pointerup', () => {
-            if (!activeCard) return;
-            activeCard.isDragging = false;
-            
-            // Snap back logic (simplified for this engine)
-            // Normaliter zou je hier checken of de drop valid is
-            this.renderAllPiles();
-            activeCard = null;
-        });
-    },
+function getCard(info) {
+    if(info.type === 'waste') return waste[waste.length-1];
+    if(info.type === 'tab') return tab[info.x][info.y];
+    if(info.type === 'found') return found[info.i][found[info.i].length-1];
+}
 
-    renderAllPiles() {
-        // Forceert alle kaarten terug naar hun berekende positie in de arrays
-        this.piles.tableau.forEach((col, i) => {
-            col.forEach((card, j) => {
-                if (!card.isDragging) {
-                    card.targetX = 15 + i * 100;
-                    card.targetY = 165 + j * 25;
-                }
-            });
-        });
-    },
-
-    loop() {
-        let last = performance.now();
-        const frame = (now) => {
-            let dt = now - last;
-            last = now;
-            this.cards.forEach(c => c.update(dt));
-            requestAnimationFrame(frame);
-        };
-        requestAnimationFrame(frame);
-    }
-};
-
-Engine.init();
-
+function isRed(c) { return c.s === '♥' || c.s === '♦'; }
+window.onresize = render;
 </script>
 </body>
 </html>
