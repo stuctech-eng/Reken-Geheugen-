@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Solitaire Neeltje Pro - Motion</title>
+<title>Solitaire Neeltje Pro - Flip Motion</title>
 
 <style>
 :root {
@@ -64,7 +64,7 @@ body, html {
 .card-inner {
     position: relative; width: 100%; height: 100%;
     transform-style: preserve-3d;
-    transition: transform 0.4s ease-in-out;
+    transition: transform 0.5s ease-in-out;
 }
 
 /* FLIP LOGICA */
@@ -78,13 +78,7 @@ body, html {
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
-/* VOORKANT */
-.card-front {
-    background: #fff; color: #000;
-    border: 1px solid #ddd;
-}
-
-/* ACHTERKANT */
+.card-front { background: #fff; color: #000; border: 1px solid #ddd; }
 .card-back {
     background: linear-gradient(145deg, #1a3fbf, #0a1870);
     border: 2px solid #fff;
@@ -98,28 +92,25 @@ body, html {
 .red { color: var(--red); }
 .black { color: var(--black); }
 
-/* SLEEP EFFECT */
-.dragging { 
-    z-index: 1000 !important; 
-    transition: none !important; 
-}
+/* DRAG */
+.dragging { z-index: 1000 !important; transition: none !important; }
 .dragging .card-inner { transform: scale(1.1) !important; }
 
-/* MENU */
+/* SHUFFLE ANIMATIE */
+@keyframes shuffle-anim {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(-30px, 10px) rotate(-10deg); }
+    50% { transform: translate(30px, -10px) rotate(10deg); }
+    75% { transform: translate(-15px, -15px) rotate(-5deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+}
+.shuffling { animation: shuffle-anim 0.4s ease-in-out infinite; }
+
 #menu {
     position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column;
     align-items: center; justify-content: center; background: var(--bg); gap: 20px;
 }
 .opt { width: 280px; padding: 25px; background: rgba(255,255,255,0.05); border-radius: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
-
-/* SHUFFLE ANIMATIE */
-@keyframes shuffle {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-20px) rotate(-5deg); }
-    50% { transform: translateX(20px) rotate(5deg); }
-    100% { transform: translateX(0); }
-}
-.shuffling { animation: shuffle 0.3s ease-in-out infinite; }
 </style>
 </head>
 <body>
@@ -138,7 +129,7 @@ body, html {
     </div>
     <div id="nav">
         <button class="btn" onclick="location.reload()">MENU</button>
-        <button class="btn" onclick="init()">SCHUDDEN</button>
+        <button class="btn" onclick="init()">NIEUW SPEL</button>
     </div>
     <div id="board"></div>
 </div>
@@ -156,21 +147,20 @@ function start(d) {
 }
 
 async function init() {
-    // Reset data
     score = 0; moves = 0; secs = 0; clearInterval(timer);
     document.getElementById('score').textContent = '0';
     document.getElementById('moves').textContent = '0';
     
     const b = document.getElementById('board');
-    b.innerHTML = '<div id="deck-proxy" class="card dn shuffling" style="left: calc(50% - 40px); top: 40%;"></div>';
+    b.innerHTML = '<div id="deck-proxy" class="card dn shuffling" style="left: calc(50% - 40px); top: 35%; width:80px; height:120px;">' +
+                  '<div class="card-inner"><div class="card-face card-back"></div></div></div>';
     
-    // "Langer schudden" effect (1.5 seconde)
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 1200));
     
     timer = setInterval(() => { secs++; let m=Math.floor(secs/60), s=secs%60; document.getElementById('time').textContent=`${m}:${s<10?'0':''}${s}`; }, 1000);
     
     let deck = [];
-    S.forEach(s => R.forEach(r => deck.push({s, r, up: false, rz: (Math.random()*4-2)})));
+    S.forEach(s => R.forEach(r => deck.push({s, r, up: false})));
     deck.sort(() => Math.random() - 0.5);
 
     tab = Array.from({length:7}, (_,i) => deck.splice(0, i+1));
@@ -196,14 +186,24 @@ function render(isDealing = false) {
     // Stock
     if(stock.length > 0) {
         let k = createK({up:false}, 6*(cw+gap), 0);
-        k.onclick = drawStock; b.appendChild(k);
+        k.onclick = drawStock;
+        b.appendChild(k);
+    } else {
+        let emptyStock = document.createElement('div');
+        emptyStock.className = 'slot'; emptyStock.style.width = cw+'px'; emptyStock.style.height = ch+'px';
+        emptyStock.style.left = 6*(cw+gap)+'px';
+        emptyStock.onclick = resetStock;
+        b.appendChild(emptyStock);
     }
 
     // Waste
-    if(waste.length > 0) {
-        let k = createK(waste[waste.length-1], 5*(cw+gap), 0);
-        attachDrag(k, {type:'waste'}); b.appendChild(k);
-    }
+    waste.forEach((card, i) => {
+        if(i === waste.length - 1) {
+            let k = createK(card, 5*(cw+gap), 0);
+            attachDrag(k, {type:'waste'});
+            b.appendChild(k);
+        }
+    });
 
     // Tableau
     tab.forEach((col, x) => {
@@ -211,11 +211,11 @@ function render(isDealing = false) {
         col.forEach((card, y) => {
             let k = createK(card, x*(cw+gap), yPos);
             if(isDealing) {
-                k.style.left = '50%'; k.style.top = '40%';
+                k.style.left = '50%'; k.style.top = '35%';
                 setTimeout(() => { 
                     k.style.left = (x*(cw+gap)) + 'px'; 
                     k.style.top = (ch + gap + (card.up ? y*cw*0.35 : y*cw*0.15)) + 'px';
-                }, (x + y) * 60);
+                }, (x + y) * 50);
             }
             if(card.up) attachDrag(k, {type:'tab', x, y});
             else if(y === col.length-1) k.onclick = () => { card.up=true; render(); };
@@ -255,9 +255,26 @@ function createK(card, x, y) {
 }
 
 function drawStock() {
+    if(stock.length === 0) return;
+    
     let n = diff === 3 ? Math.min(3, stock.length) : 1;
-    for(let i=0; i<n; i++) { if(stock.length>0) { let c = stock.pop(); c.up = true; waste.push(c); } }
-    moves++; render();
+    for(let i=0; i<n; i++) {
+        let card = stock.pop();
+        // Belangrijk: we renderen de kaart eerst "dicht" op de stock-positie
+        // Daarna zetten we hem "open" op de waste-positie voor het flip-effect
+        card.up = true;
+        waste.push(card);
+    }
+    moves++;
+    render();
+}
+
+function resetStock() {
+    if(waste.length === 0) return;
+    stock = waste.reverse().map(c => ({...c, up: false}));
+    waste = [];
+    moves++;
+    render();
 }
 
 function attachDrag(el, info) {
@@ -269,22 +286,35 @@ function attachDrag(el, info) {
                 Math.abs(parseFloat(c.style.left) - dragInfo.origX) < 1 && parseFloat(c.style.top) >= dragInfo.origY
             );
         } else { dragInfo.cards = [el]; }
-        dragInfo.cards.forEach(c => { c.classList.add('dragging'); c.dataset.ox = parseFloat(c.style.left); c.dataset.oy = parseFloat(c.style.top); });
+        dragInfo.cards.forEach(c => { 
+            c.classList.add('dragging'); 
+            c.dataset.ox = parseFloat(c.style.left); 
+            c.dataset.oy = parseFloat(c.style.top); 
+        });
         el.setPointerCapture(e.pointerId);
     };
 
     el.onpointermove = (e) => {
         if(!dragInfo) return;
         let dx = e.clientX - dragInfo.startX, dy = e.clientY - dragInfo.startY;
-        dragInfo.cards.forEach(c => { c.style.left = (parseFloat(c.dataset.ox) + dx) + 'px'; c.style.top = (parseFloat(c.dataset.oy) + dy) + 'px'; });
+        dragInfo.cards.forEach(c => { 
+            c.style.left = (parseFloat(c.dataset.ox) + dx) + 'px'; 
+            c.style.top = (parseFloat(c.dataset.oy) + dy) + 'px'; 
+        });
     };
 
     el.onpointerup = (e) => {
         if(!dragInfo) return;
         let dx = Math.abs(e.clientX - dragInfo.startX), dy = Math.abs(e.clientY - dragInfo.startY);
+        
+        // Foundation check op klik
         if(dx < 10 && dy < 10) {
-            for(let i=0; i<4; i++) if(isValidFoundation(dragInfo.info, i)) { executeFoundation(dragInfo.info, i); dragInfo=null; render(); return; }
+            for(let i=0; i<4; i++) if(isValidFoundation(dragInfo.info, i)) { 
+                executeFoundation(dragInfo.info, i); 
+                dragInfo=null; render(); return; 
+            }
         }
+        
         const target = document.elementFromPoint(e.clientX, e.clientY);
         const slot = target ? target.closest('.slot, .card') : null;
         if(slot) {
@@ -318,11 +348,15 @@ function executeMove(src, tx) {
     else if(src.type === 'tab') cards = tab[src.x].splice(src.y);
     else if(src.type === 'found') cards = [found[src.i].pop()];
     tab[tx].push(...cards); moves++; score += 5;
+    document.getElementById('score').textContent = score;
+    document.getElementById('moves').textContent = moves;
 }
 
 function executeFoundation(src, fi) {
     let card = (src.type === 'waste') ? waste.pop() : (src.type === 'tab' ? tab[src.x].pop() : found[src.i].pop());
     found[fi].push(card); moves++; score += 10;
+    document.getElementById('score').textContent = score;
+    document.getElementById('moves').textContent = moves;
 }
 
 function getCard(info) {
