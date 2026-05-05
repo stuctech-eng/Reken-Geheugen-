@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Solitaire Neeltje Luxe v3</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Solitaire Neeltje Luxe Pro</title>
+
 <style>
 :root {
     --bg: #070b14;
@@ -13,59 +12,90 @@
     --red: #ff3b6b;
     --black: #2c3e50;
 }
+
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+
 body, html {
     width: 100%; height: 100%;
     font-family: -apple-system, system-ui, sans-serif;
     background: var(--bg); overflow: hidden; color: #fff;
 }
+
 #app {
     display: none; height: 100vh; flex-direction: column;
-    background: radial-gradient(circle at 20% 20%, #1a2d66 0%, transparent 40%), linear-gradient(180deg, #070b18, #05060a);
+    background: radial-gradient(circle at 50% 50%, #1a2d66 0%, #070b18 100%);
 }
+
+/* UI HEADER */
 #header {
-    display: flex; justify-content: space-around; padding: 12px;
-    background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px);
+    display: flex; justify-content: space-around; padding: 15px;
+    background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px);
     border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 .stat { text-align: center; }
 .stat b { font-size: 10px; color: var(--accent); display: block; text-transform: uppercase; }
 .stat span { font-size: 18px; font-weight: 800; }
-#nav { display: flex; gap: 8px; padding: 8px; background: rgba(0,0,0,0.2); }
+
+#nav { display: flex; gap: 10px; padding: 10px; background: rgba(0,0,0,0.2); }
 .btn {
-    flex: 1; padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.05); color: #fff; font-weight: bold; font-size: 11px;
+    flex: 1; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05); color: #fff; font-weight: bold; font-size: 12px;
 }
-#board { flex: 1; position: relative; margin: 10px; }
+.btn-gold { background: linear-gradient(135deg, #f5c840, #d4a017); color: #000; border: none; }
+
+/* HET BORD */
+#board { flex: 1; position: relative; margin: 10px; perspective: 1000px; }
+
 .slot {
     position: absolute; border-radius: 10px;
-    border: 2px dashed rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.02);
+    border: 2px dashed rgba(255,255,255,0.05);
+    background: rgba(0,0,0,0.1);
 }
+
 .card {
     position: absolute; border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    transition: transform 0.1s; touch-action: none;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s;
+    will-change: transform, left, top;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    touch-action: none;
 }
+
 .card.up { background: #fff; border: 1px solid #ddd; color: #000; }
-.card.dn { background: linear-gradient(145deg, #1a3fbf, #0a1870); border: 2px solid #fff; }
-.card-content { position: relative; width: 100%; height: 100%; padding: 5px; pointer-events: none; }
-.rank { font-size: 16px; font-weight: 900; line-height: 1.1; }
-.suit-mid { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 35px; opacity: 0.15; }
+.card.dn { 
+    background: linear-gradient(145deg, #1a3fbf, #0a1870); 
+    border: 2px solid #fff; 
+}
+
+.card-content { position: relative; width: 100%; height: 100%; padding: 6px; pointer-events: none; }
+.rank { font-size: 18px; font-weight: 900; line-height: 1; }
+.suit-mid { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 40px; opacity: 0.1; }
+
 .red { color: var(--red); }
 .black { color: var(--black); }
-.dragging { z-index: 1000 !important; transform: scale(1.05); opacity: 0.9; }
+
+/* SLEEP EFFECT */
+.dragging { 
+    z-index: 1000 !important; 
+    transition: none !important; 
+    transform: scale(1.1) rotate(2deg) !important;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6) !important;
+}
+
+/* MENU */
 #menu {
     position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column;
     align-items: center; justify-content: center; background: var(--bg); gap: 20px;
 }
-.opt { width: 280px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+.opt { 
+    width: 280px; padding: 25px; background: rgba(255,255,255,0.05); 
+    border-radius: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); 
+}
 </style>
 </head>
 <body>
 
 <div id="menu">
-    <h1 style="letter-spacing: 4px;">SOLITAIRE</h1>
+    <h1 style="letter-spacing: 5px; color: var(--accent);">SOLITAIRE</h1>
     <div class="opt" onclick="start(1)"><h2>MAKKELIJK</h2><p>1 kaart trekken</p></div>
     <div class="opt" onclick="start(3)"><h2>MOEILIJK</h2><p>3 kaarten trekken</p></div>
 </div>
@@ -78,7 +108,7 @@ body, html {
     </div>
     <div id="nav">
         <button class="btn" onclick="location.reload()">MENU</button>
-        <button class="btn" onclick="init()">NIEUW</button>
+        <button class="btn btn-gold" onclick="init()">HERSTART</button>
     </div>
     <div id="board"></div>
 </div>
@@ -89,29 +119,43 @@ let stock = [], waste = [], found = [[],[],[],[]], tab = [[],[],[],[],[],[],[]];
 let diff = 1, score = 0, moves = 0, secs = 0, timer = null, cw, ch, gap = 8, dragInfo = null;
 
 function start(d) {
-    diff = d; document.getElementById('menu').style.display = 'none';
-    document.getElementById('app').style.display = 'flex'; init();
+    diff = d;
+    document.getElementById('menu').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    init();
 }
 
 function init() {
     score = 0; moves = 0; secs = 0; clearInterval(timer);
+    document.getElementById('score').textContent = '0';
+    document.getElementById('moves').textContent = '0';
     timer = setInterval(() => { secs++; let m=Math.floor(secs/60), s=secs%60; document.getElementById('time').textContent=`${m}:${s<10?'0':''}${s}`; }, 1000);
-    let deck = []; S.forEach(s => R.forEach(r => deck.push({s, r, up: false})));
+    
+    let deck = [];
+    S.forEach(s => R.forEach(r => deck.push({s, r, up: false, rz: (Math.random()*4-2)})));
     deck.sort(() => Math.random() - 0.5);
+
     tab = Array.from({length:7}, (_,i) => deck.splice(0, i+1));
     tab.forEach(col => col[col.length-1].up = true);
     stock = deck; waste = []; found = [[],[],[],[]];
-    render();
+    render(true); // 'true' voor animatie effect bij start
 }
 
-function render() {
-    const b = document.getElementById('board'); b.innerHTML = '';
-    cw = (b.clientWidth - (6 * gap)) / 7; ch = cw * 1.45;
+function render(isDealing = false) {
+    const b = document.getElementById('board');
+    b.innerHTML = '';
+    cw = (b.clientWidth - (6 * gap)) / 7;
+    ch = cw * 1.45;
+
+    // Slots
     for(let i=0; i<7; i++){
-        let s = document.createElement('div'); s.className = 'slot'; 
-        s.style.width = cw+'px'; s.style.height = ch+'px';
-        s.style.left = (i*(cw+gap))+'px'; b.appendChild(s);
+        let s = document.createElement('div');
+        s.className = 'slot'; s.style.width = cw+'px'; s.style.height = ch+'px';
+        s.style.left = (i*(cw+gap))+'px'; s.style.top = '0px';
+        b.appendChild(s);
     }
+
+    // Stock & Waste
     if(stock.length > 0) {
         let k = createK({up:false}, 6*(cw+gap), 0);
         k.onclick = drawStock; b.appendChild(k);
@@ -121,20 +165,29 @@ function render() {
         r.onclick = () => { stock = waste.reverse().map(c=>({...c,up:false})); waste=[]; render(); };
         b.appendChild(r);
     }
+
     if(waste.length > 0) {
         let k = createK(waste[waste.length-1], 5*(cw+gap), 0);
         attachDrag(k, {type:'waste'}); b.appendChild(k);
     }
+
+    // Tableau
     tab.forEach((col, x) => {
         let yPos = ch + gap;
         col.forEach((card, y) => {
             let k = createK(card, x*(cw+gap), yPos);
+            if(isDealing) { // Boog-effect bij dealen
+                k.style.top = '-200px';
+                setTimeout(() => { k.style.top = yPos + 'px'; }, (x + y) * 50);
+            }
             if(card.up) attachDrag(k, {type:'tab', x, y});
             else if(y === col.length-1) k.onclick = () => { card.up=true; score+=5; render(); };
             b.appendChild(k);
             yPos += card.up ? cw*0.35 : cw*0.15;
         });
     });
+
+    // Foundations
     found.forEach((f, i) => {
         if(f.length > 0) {
             let k = createK(f[f.length-1], i*(cw+gap), 0);
@@ -148,6 +201,7 @@ function createK(card, x, y) {
     el.className = `card ${card.up ? 'up' : 'dn'}`;
     el.style.width = cw+'px'; el.style.height = ch+'px';
     el.style.left = x+'px'; el.style.top = y+'px';
+    el.style.transform = `rotateZ(${card.rz}deg)`;
     if(card.up) {
         const red = card.s==='♥'||card.s==='♦';
         el.innerHTML = `<div class="card-content ${red?'red':'black'}"><div class="rank">${card.r}<br>${card.s}</div><div class="suit-mid">${card.s}</div></div>`;
@@ -164,33 +218,33 @@ function drawStock() {
 function attachDrag(el, info) {
     el.onpointerdown = (e) => {
         if(e.button !== 0 && e.pointerType !== 'touch') return;
-        // Foundation check on single tap/click
-        let clickTimer = setTimeout(() => {
-            if(!dragInfo) return;
-            dragInfo.isDragging = true;
-        }, 150);
-
+        
         dragInfo = { 
             el, info, startX: e.clientX, startY: e.clientY,
             origX: parseFloat(el.style.left), origY: parseFloat(el.style.top),
-            cards: [], isDragging: false
+            cards: []
         };
+
         if(info.type === 'tab') {
             dragInfo.cards = Array.from(document.querySelectorAll('.card')).filter(c => 
-                parseFloat(c.style.left) === dragInfo.origX && parseFloat(c.style.top) >= dragInfo.origY
+                Math.abs(parseFloat(c.style.left) - dragInfo.origX) < 1 && parseFloat(c.style.top) >= dragInfo.origY
             );
         } else { dragInfo.cards = [el]; }
-        dragInfo.cards.forEach(c => c.classList.add('dragging'));
+
+        dragInfo.cards.forEach(c => {
+            c.classList.add('dragging');
+            c.dataset.ox = parseFloat(c.style.left);
+            c.dataset.oy = parseFloat(c.style.top);
+        });
         el.setPointerCapture(e.pointerId);
     };
 
     el.onpointermove = (e) => {
-        if(!dragInfo || !dragInfo.isDragging) return;
+        if(!dragInfo) return;
         let dx = e.clientX - dragInfo.startX, dy = e.clientY - dragInfo.startY;
         dragInfo.cards.forEach(c => {
-            c.style.left = (parseFloat(c.dataset.ox || c.style.left) + dx) + 'px';
-            c.style.top = (parseFloat(c.dataset.oy || c.style.top) + dy) + 'px';
-            if(!c.dataset.ox) { c.dataset.ox = parseFloat(c.style.left) - dx; c.dataset.oy = parseFloat(c.style.top) - dy; }
+            c.style.left = (parseFloat(c.dataset.ox) + dx) + 'px';
+            c.style.top = (parseFloat(c.dataset.oy) + dy) + 'px';
         });
     };
 
@@ -198,14 +252,9 @@ function attachDrag(el, info) {
         if(!dragInfo) return;
         let dx = Math.abs(e.clientX - dragInfo.startX);
         let dy = Math.abs(e.clientY - dragInfo.startY);
-        
-        if(dx < 5 && dy < 5) { // Click/Tap detected
-            for(let i=0; i<4; i++) {
-                if(isValidFoundation(dragInfo.info, i)) {
-                    executeFoundation(dragInfo.info, i);
-                    dragInfo = null; render(); return;
-                }
-            }
+
+        if(dx < 10 && dy < 10) { // Snelklik naar foundation
+            for(let i=0; i<4; i++) if(isValidFoundation(dragInfo.info, i)) { executeFoundation(dragInfo.info, i); dragInfo=null; render(); return; }
         }
 
         const target = document.elementFromPoint(e.clientX, e.clientY);
@@ -255,7 +304,7 @@ function getCard(info) {
 }
 
 function isRed(c) { return c.s === '♥' || c.s === '♦'; }
-window.onresize = render;
+window.onresize = () => render();
 </script>
 </body>
 </html>
