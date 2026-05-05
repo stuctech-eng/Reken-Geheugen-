@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Solitaire Neeltje - Versie 9.2 (Zwevend Slepen)</title>
+<title>Solitaire Neeltje - Versie 9.3 (Offset & Foundation)</title>
 
 <style>
 :root {
@@ -11,9 +11,8 @@
     --accent: #f5c840;
     --red: #ff3b6b;
     --black: #2c3e50;
-    --anim-speed: 0.7s;
-    /* De 'zweef' snelheid voor tijdens het slepen */
-    --float-speed: 0.15s; 
+    --anim-speed: 0.6s;
+    --float-speed: 0.1s; /* Sneller zweven */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -39,20 +38,18 @@ body {
     position: absolute;
     border-radius: 10px;
     transform-style: preserve-3d;
-    /* Standaard transitie voor automatisch verplaatsen */
-    transition: left var(--anim-speed) cubic-bezier(0.4, 0, 0.2, 1), 
-                top var(--anim-speed) cubic-bezier(0.4, 0, 0.2, 1);
+    transition: left var(--anim-speed) cubic-bezier(0.2, 0.8, 0.2, 1), 
+                top var(--anim-speed) cubic-bezier(0.2, 0.8, 0.2, 1);
     z-index: 10;
-    cursor: grab;
 }
 
-/* VERSIE 9.2: Zwevend effect door een korte transitie te behouden */
+/* VERSIE 9.3: Meer offset en snellere float */
 .card.dragging {
     transition: left var(--float-speed) ease-out, 
                 top var(--float-speed) ease-out !important;
     z-index: 1000 !important;
-    transform: scale(1.08) translateY(-10px); /* Kaart 'vliegt' iets omhoog */
-    filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5));
+    transform: scale(1.1) translateY(-60px); /* Kaart hangt nu 60px BOVEN je vinger */
+    filter: drop-shadow(0 25px 35px rgba(0,0,0,0.6));
 }
 
 .card-inner {
@@ -69,7 +66,6 @@ body {
     position: absolute; inset: 0;
     backface-visibility: hidden;
     border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
 }
 
 .card-front { background: #fff; color: #000; }
@@ -93,8 +89,8 @@ body {
 <body>
 
 <div id="menu">
-    <h1 style="color:var(--accent)">SOLITAIRE 9.2</h1>
-    <div class="btn-start" onclick="start(1)">START GAME</div>
+    <h1 style="color:var(--accent)">SOLITAIRE 9.3</h1>
+    <div class="btn-start" onclick="start()">START SPEL</div>
 </div>
 
 <div id="app">
@@ -106,11 +102,11 @@ body {
 </div>
 
 <script>
-let stock = [], waste = [], tab = [[],[],[],[],[],[],[]];
+let stock = [], waste = [], tab = [[],[],[],[],[],[],[]], found = [[],[],[],[]];
 let cw, ch, gap = 8;
 let dragTarget = null, offset = { x: 0, y: 0 };
 
-function start(d) {
+function start() {
     document.getElementById('menu').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
     init();
@@ -123,7 +119,7 @@ function init() {
     
     tab = Array.from({length: 7}, (_, i) => deck.splice(0, i + 1));
     tab.forEach(c => c[c.length-1].up = true);
-    stock = deck; waste = [];
+    stock = deck; waste = []; found = [[],[],[],[]];
     render();
 }
 
@@ -133,34 +129,45 @@ function render() {
     cw = (b.clientWidth - (6 * gap)) / 7;
     ch = cw * 1.4;
 
-    for(let i=0; i<7; i++) {
+    // Teken Tableau Slots & Kaarten
+    tab.forEach((col, x) => {
         let s = document.createElement('div');
         s.className = 'slot'; s.style.width = cw+'px'; s.style.height = ch+'px';
-        s.style.left = (i*(cw+gap))+'px'; b.appendChild(s);
-    }
+        s.style.left = (x*(cw+gap))+'px'; s.style.top = (ch+gap)+'px';
+        b.appendChild(s);
 
-    if(stock.length > 0) {
-        let k = createK({up:false}, 6*(cw+gap), 0);
-        k.onclick = drawStock;
-        b.appendChild(k);
-    }
-
-    waste.forEach((card, i) => {
-        let k = createK(card, 5*(cw+gap), 0);
-        if(i === waste.length - 1) k.onpointerdown = startDrag;
-        b.appendChild(k);
-    });
-
-    tab.forEach((col, x) => {
         col.forEach((card, y) => {
-            let k = createK(card, x*(cw+gap), ch + gap + (y*20));
-            if(card.up) k.onpointerdown = startDrag;
+            let k = createK(card, x*(cw+gap), ch + gap + (y*20), 'tab', x, y);
             b.appendChild(k);
         });
     });
+
+    // Foundations (Azen vakken)
+    found.forEach((fCol, i) => {
+        let s = document.createElement('div');
+        s.className = 'slot'; s.style.width = cw+'px'; s.style.height = ch+'px';
+        s.style.left = (i*(cw+gap))+'px'; s.style.top = '0px';
+        b.appendChild(s);
+
+        if(fCol.length > 0) {
+            let k = createK(fCol[fCol.length-1], i*(cw+gap), 0, 'found', i);
+            b.appendChild(k);
+        }
+    });
+
+    // Stock & Waste
+    if(stock.length > 0) {
+        let k = createK({up:false}, 6*(cw+gap), 0, 'stock');
+        k.onclick = drawStock;
+        b.appendChild(k);
+    }
+    waste.forEach((card, i) => {
+        let k = createK(card, 5*(cw+gap), 0, 'waste', 0, i);
+        b.appendChild(k);
+    });
 }
 
-function createK(card, x, y) {
+function createK(card, x, y, type, colIdx, rowIdx) {
     const el = document.createElement('div');
     el.className = `card ${card.up ? 'up' : 'dn'}`;
     el.style.width = cw+'px'; el.style.height = ch+'px';
@@ -178,14 +185,18 @@ function createK(card, x, y) {
             </div>
         </div>
     `;
+
+    if(card.up) {
+        el.onpointerdown = (e) => startDrag(e, type, colIdx, rowIdx);
+        el.ondblclick = () => tryToAutoMove(card, type, colIdx, rowIdx);
+    }
     return el;
 }
 
-function startDrag(e) {
+function startDrag(e, type, col, row) {
     dragTarget = e.currentTarget;
     dragTarget.classList.add('dragging');
     const rect = dragTarget.getBoundingClientRect();
-    // We pakken het midden voor een rustiger gevoel
     offset.x = e.clientX - rect.left;
     offset.y = e.clientY - rect.top;
     dragTarget.setPointerCapture(e.pointerId);
@@ -193,7 +204,6 @@ function startDrag(e) {
 
 window.onpointermove = (e) => {
     if (!dragTarget) return;
-    // De card.dragging CSS zorgt voor de 'zwevende' vertraging van 0.15s
     dragTarget.style.left = (e.clientX - offset.x) + 'px';
     dragTarget.style.top = (e.clientY - offset.y) + 'px';
 };
@@ -206,22 +216,42 @@ window.onpointerup = () => {
 }
 
 function drawStock() {
-    if(stock.length === 0) return;
+    if(stock.length === 0) {
+        stock = waste.reverse().map(c => ({...c, up: false}));
+        waste = []; render(); return;
+    }
     let card = stock.pop();
-    const b = document.getElementById('board');
     const tempK = createK({ ...card, up: false }, 6*(cw+gap), 0);
-    b.appendChild(tempK);
+    document.getElementById('board').appendChild(tempK);
 
     setTimeout(() => {
         tempK.style.left = 5*(cw+gap) + 'px';
-        tempK.classList.remove('dn');
-        tempK.classList.add('up');
+        tempK.classList.remove('dn'); tempK.classList.add('up');
         setTimeout(() => {
-            card.up = true;
-            waste.push(card);
+            card.up = true; waste.push(card); render();
+        }, 600);
+    }, 30);
+}
+
+function tryToAutoMove(card, type, colIdx, rowIdx) {
+    const ranks = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+    for(let i=0; i<4; i++) {
+        let f = found[i];
+        let canPlace = false;
+        if(f.length === 0 && card.r === 'A') canPlace = true;
+        else if(f.length > 0) {
+            let top = f[f.length-1];
+            if(top.s === card.s && ranks.indexOf(card.r) === ranks.indexOf(top.r) + 1) canPlace = true;
+        }
+
+        if(canPlace) {
+            if(type === 'tab') tab[colIdx].splice(rowIdx, 1);
+            else if(type === 'waste') waste.pop();
+            found[i].push(card);
             render();
-        }, 700);
-    }, 50);
+            return;
+        }
+    }
 }
 </script>
 </body>
