@@ -3,157 +3,119 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Solitaire Neeltje Luxe</title>
+<title>Solitaire Neeltje Master</title>
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <style>
 :root {
-    --bg-dark: #070b14;
+    --bg: #070b14;
     --accent: #f5c840;
-    --card-white: #ffffff;
     --red: #ff3b6b;
     --black: #2c3e50;
-    --shadow: 0 12px 30px rgba(0,0,0,0.5);
-    --radius: 12px;
+    --card-w: 0px; /* dynamisch via JS */
+    --card-h: 0px;
 }
 
-* {
-    box-sizing: border-box;
-    margin: 0; padding: 0;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
 
 body, html {
     width: 100%; height: 100%;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg-dark);
+    font-family: -apple-system, system-ui, sans-serif;
+    background: var(--bg);
     overflow: hidden;
     color: #fff;
 }
 
-/* De achtergrond met kleurrijk verloop */
 #app {
     display: none; height: 100vh; flex-direction: column;
     background: 
         radial-gradient(circle at 20% 20%, #1a2d66 0%, transparent 40%),
         radial-gradient(circle at 80% 80%, #0a2a2f 0%, transparent 45%),
         linear-gradient(180deg, #070b18, #05060a);
-    padding-top: env(safe-area-inset-top);
 }
 
-/* TOP BAR */
-#top-bar {
-    display: flex; justify-content: space-around; align-items: center;
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(15px);
-    padding: 15px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+/* UI Header */
+#header {
+    display: flex; justify-content: space-around; padding: 15px;
+    background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
 }
-
 .stat { text-align: center; }
-.stat b { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; display: block; opacity: 0.8; }
-.stat span { font-size: 20px; font-weight: 800; color: #fff; }
+.stat b { font-size: 10px; color: var(--accent); display: block; text-transform: uppercase; }
+.stat span { font-size: 18px; font-weight: 800; }
 
-/* KNOPPEN */
-#nav {
-    display: flex; gap: 8px; padding: 10px;
-    background: rgba(0,0,0,0.2);
-}
-
+#nav { display: flex; gap: 10px; padding: 10px; background: rgba(0,0,0,0.2); }
 .btn {
-    flex: 1; padding: 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.05); color: #fff; font-weight: bold; cursor: pointer;
-    font-size: 12px; transition: 0.2s;
+    flex: 1; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05); color: #fff; font-weight: bold; font-size: 12px;
 }
+.btn-gold { background: linear-gradient(135deg, #f5c840, #d4a017); color: #000; border: none; }
 
-.btn:active { transform: scale(0.95); background: var(--accent); color: #000; }
-.btn-new { background: linear-gradient(135deg, #f5c840, #d4a017); color: #000; border: none; }
-
-/* HET SPEELVELD */
+/* Bord */
 #board { flex: 1; position: relative; margin: 10px; }
 
 .slot {
-    position: absolute; border-radius: var(--radius);
+    position: absolute; border-radius: 10px;
     border: 2px dashed rgba(255,255,255,0.1);
     background: rgba(255,255,255,0.02);
 }
 
-/* KAART DESIGN */
 .card {
-    position: absolute; border-radius: var(--radius);
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    box-shadow: var(--shadow);
-    overflow: hidden;
+    position: absolute; border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    transition: transform 0.1s;
+    touch-action: none;
 }
 
-.card.up {
-    background: linear-gradient(145deg, #ffffff, #f0f0f0);
-    border: 1px solid #ddd;
-}
+.card.up { background: #fff; border: 1px solid #ddd; color: #000; }
+.card.dn { background: linear-gradient(145deg, #1a3fbf, #0a1870); border: 2px solid #fff; }
 
-.card.dn {
-    background: linear-gradient(145deg, #1a3fbf, #0a1870);
-    border: 3px solid #fff;
-}
+.card-content { position: relative; width: 100%; height: 100%; padding: 5px; pointer-events: none; }
+.rank { font-size: 16px; font-weight: 900; line-height: 1.1; }
+.suit-mid { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 35px; opacity: 0.15; }
 
-/* Kaart Inhoud */
-.card-content { position: relative; width: 100%; height: 100%; padding: 8px; color: #000; }
-.card-rank { font-size: 18px; font-weight: 900; line-height: 1; position: absolute; top: 8px; left: 8px; }
-.card-suit-big { 
-    position: absolute; inset: 0; display: flex; align-items: center; 
-    justify-content: center; font-size: 45px; opacity: 0.1; 
-}
 .red { color: var(--red); }
 .black { color: var(--black); }
 
-/* MENU */
+/* Sleep-effect */
+.dragging { z-index: 1000 !important; transform: scale(1.05); box-shadow: 0 20px 40px rgba(0,0,0,0.6); opacity: 0.9; }
+
 #menu {
-    position: fixed; inset: 0; z-index: 100;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    background: var(--bg-dark); gap: 20px;
+    position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; background: var(--bg); gap: 20px;
 }
-
-.menu-opt {
-    width: 80%; max-width: 320px; padding: 25px;
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 20px; text-align: center; cursor: pointer;
-}
-.menu-opt h2 { color: var(--accent); margin-bottom: 5px; }
-
+.opt { width: 280px; padding: 25px; background: rgba(255,255,255,0.05); border-radius: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
 </style>
 </head>
 <body>
 
 <div id="menu">
-    <h1 style="letter-spacing: 5px; margin-bottom: 30px;">NEELTJE PATIENCE</h1>
-    <div class="menu-opt" onclick="start(1)"><h2>NIVEAU 1</h2><p>Makkelijk</p></div>
-    <div class="menu-opt" onclick="start(3)"><h2>NIVEAU 3</h2><p>Moeilijk</p></div>
+    <h1 style="letter-spacing: 4px;">SOLITAIRE</h1>
+    <div class="opt" onclick="start(1)"><h2>MAKKELIJK</h2><p>1 kaart trekken</p></div>
+    <div class="opt" onclick="start(3)"><h2>MOEILIJK</h2><p>3 kaarten trekken</p></div>
 </div>
 
 <div id="app">
-    <div id="top-bar">
+    <div id="header">
         <div class="stat"><b>Tijd</b><span id="time">0:00</span></div>
         <div class="stat"><b>Score</b><span id="score">0</span></div>
         <div class="stat"><b>Zetten</b><span id="moves">0</span></div>
     </div>
-    
     <div id="nav">
         <button class="btn" onclick="location.reload()">MENU</button>
-        <button class="btn btn-new" onclick="init()">NIEUW SPEL</button>
+        <button class="btn btn-gold" onclick="init()">HERSTART</button>
     </div>
-
     <div id="board"></div>
 </div>
 
 <script>
-const S = ['♠', '♥', '♦', '♣'];
-const R = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+const S = ['♠', '♥', '♦', '♣'], R = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 let stock = [], waste = [], found = [[],[],[],[]], tab = [[],[],[],[],[],[],[]];
-let diff = 1, moves = 0, score = 0, secs = 0, timer = null;
+let diff = 1, score = 0, moves = 0, secs = 0, timer = null;
 let cw, ch, gap = 8;
+let dragInfo = null;
 
 function start(d) {
     diff = d;
@@ -163,31 +125,16 @@ function start(d) {
 }
 
 function init() {
-    moves = 0; score = 0; secs = 0;
-    document.getElementById('moves').textContent = '0';
-    document.getElementById('score').textContent = '0';
-    clearInterval(timer);
-    timer = setInterval(() => {
-        secs++;
-        let m = Math.floor(secs/60), s = secs%60;
-        document.getElementById('time').textContent = m + ":" + (s<10?'0':'') + s;
-    }, 1000);
-
+    score = 0; moves = 0; secs = 0; clearInterval(timer);
+    timer = setInterval(() => { secs++; let m=Math.floor(secs/60), s=secs%60; document.getElementById('time').textContent=`${m}:${s<10?'0':''}${s}`; }, 1000);
+    
     let deck = [];
     S.forEach(s => R.forEach(r => deck.push({s, r, up: false})));
     deck.sort(() => Math.random() - 0.5);
 
-    tab = [[],[],[],[],[],[],[]];
-    for(let i=0; i<7; i++) {
-        for(let j=0; j<=i; j++) {
-            let k = deck.pop();
-            k.up = (i === j);
-            tab[i].push(k);
-        }
-    }
-    stock = deck;
-    waste = [];
-    found = [[],[],[],[]];
+    tab = Array.from({length:7}, (_,i) => deck.splice(0, i+1));
+    tab.forEach(col => col[col.length-1].up = true);
+    stock = deck; waste = []; found = [[],[],[],[]];
     render();
 }
 
@@ -197,125 +144,166 @@ function render() {
     cw = (b.clientWidth - (6 * gap)) / 7;
     ch = cw * 1.45;
 
-    // Slots bovenaan
-    for(let i=0; i<7; i++) {
+    // Slots
+    for(let i=0; i<7; i++){
         let s = document.createElement('div');
-        s.className = 'slot';
-        s.style.width = cw+'px'; s.style.height = ch+'px';
-        s.style.left = (i*(cw+gap))+'px'; s.style.top = '0px';
-        b.appendChild(s);
+        s.className = 'slot'; s.style.width = cw+'px'; s.style.height = ch+'px';
+        s.style.left = (i*(cw+gap))+'px'; b.appendChild(s);
+        if(i < 4) s.dataset.f = i; else if(i >= 0) s.dataset.t = i;
     }
 
-    // Voorraad (Stock)
+    // Stock & Waste
     if(stock.length > 0) {
-        let k = drawK({up:false}, 6*(cw+gap), 0);
-        k.onclick = () => {
-            let n = diff === 3 ? Math.min(3, stock.length) : 1;
-            for(let i=0; i<n; i++) {
-                let c = stock.pop();
-                c.up = true;
-                waste.push(c);
-            }
-            moves++; render();
-        };
-        b.appendChild(k);
+        let k = createK({up:false}, 6*(cw+gap), 0);
+        k.onclick = drawStock; b.appendChild(k);
     } else {
-        // Recycle stock
-        let r = document.createElement('div');
-        r.className = 'slot';
-        r.style.width = cw+'px'; r.style.height = ch+'px';
-        r.style.left = 6*(cw+gap)+'px';
-        r.onclick = () => {
-            stock = waste.reverse().map(c => ({...c, up:false}));
-            waste = []; render();
-        };
+        let r = document.createElement('div'); r.className = 'slot';
+        r.style.width = cw+'px'; r.style.height = ch+'px'; r.style.left = 6*(cw+gap)+'px';
+        r.onclick = () => { stock = waste.reverse().map(c=>({...c,up:false})); waste=[]; render(); };
         b.appendChild(r);
     }
 
-    // Aflegstapel (Waste)
     if(waste.length > 0) {
-        let k = drawK(waste[waste.length-1], 5*(cw+gap), 0);
-        k.onclick = () => autoMove({type:'waste'});
-        b.appendChild(k);
+        let k = createK(waste[waste.length-1], 5*(cw+gap), 0);
+        attachDrag(k, {type:'waste'}); b.appendChild(k);
     }
 
-    // Tableau (Kolommen)
+    // Tableau
     tab.forEach((col, x) => {
         let yPos = ch + gap;
         col.forEach((card, y) => {
-            let k = drawK(card, x*(cw+gap), yPos);
-            if(card.up) {
-                // Alleen bovenste kaart van kolom is klikbaar voor foundation
-                if(y === col.length - 1) k.onclick = () => autoMove({type:'tab', x, y});
-            } else {
-                // Draai om als het de onderste is
-                if(y === col.length - 1) k.onclick = () => { card.up = true; score+=5; render(); };
-            }
+            let k = createK(card, x*(cw+gap), yPos);
+            if(card.up) attachDrag(k, {type:'tab', x, y});
+            else if(y === col.length-1) k.onclick = () => { card.up=true; score+=5; render(); };
             b.appendChild(k);
             yPos += card.up ? cw*0.35 : cw*0.15;
         });
     });
 
-    // Foundation (Bovenin)
+    // Foundations
     found.forEach((f, i) => {
         if(f.length > 0) {
-            let k = drawK(f[f.length-1], i*(cw+gap), 0);
-            b.appendChild(k);
+            let k = createK(f[f.length-1], i*(cw+gap), 0);
+            attachDrag(k, {type:'found', i}); b.appendChild(k);
         }
     });
 }
 
-function drawK(card, x, y) {
+function createK(card, x, y) {
     const el = document.createElement('div');
     el.className = `card ${card.up ? 'up' : 'dn'}`;
-    el.style.width = cw + 'px';
-    el.style.height = ch + 'px';
-    el.style.left = x + 'px';
-    el.style.top = y + 'px';
-
+    el.style.width = cw+'px'; el.style.height = ch+'px';
+    el.style.left = x+'px'; el.style.top = y+'px';
     if(card.up) {
-        const isRed = card.s === '♥' || card.s === '♦';
-        el.innerHTML = `
-            <div class="card-content ${isRed ? 'red' : 'black'}">
-                <div class="card-rank">${card.r}<br>${card.s}</div>
-                <div class="card-suit-big">${card.s}</div>
-            </div>`;
+        const red = card.s==='♥'||card.s==='♦';
+        el.innerHTML = `<div class="card-content ${red?'red':'black'}"><div class="rank">${card.r}<br>${card.s}</div><div class="suit-mid">${card.s}</div></div>`;
     }
     return el;
 }
 
-function autoMove(info) {
-    let card;
-    if(info.type === 'waste') card = waste[waste.length-1];
-    if(info.type === 'tab') card = tab[info.x][info.y];
+function drawStock() {
+    let n = diff === 3 ? Math.min(3, stock.length) : 1;
+    for(let i=0; i<n; i++) { let c = stock.pop(); c.up = true; waste.push(c); }
+    moves++; render();
+}
 
-    for(let i=0; i<4; i++) {
-        let target = found[i];
-        let ok = false;
-        if(target.length === 0) {
-            if(card.r === 'A') ok = true;
+function attachDrag(el, info) {
+    el.onpointerdown = (e) => {
+        if(e.button !== 0 && e.pointerType !== 'touch') return;
+        dragInfo = { 
+            el, info, 
+            startX: e.clientX, startY: e.clientY,
+            origX: parseFloat(el.style.left), origY: parseFloat(el.style.top),
+            cards: []
+        };
+        
+        // Pak stapel kaarten als het uit tableau komt
+        if(info.type === 'tab') {
+            dragInfo.cards = Array.from(document.querySelectorAll('.card')).filter(c => {
+                return parseFloat(c.style.left) === dragInfo.origX && parseFloat(c.style.top) >= dragInfo.origY;
+            });
         } else {
-            let top = target[target.length-1];
-            if(card.s === top.s && R.indexOf(card.r) === R.indexOf(top.r) + 1) ok = true;
+            dragInfo.cards = [el];
         }
 
-        if(ok) {
-            if(info.type === 'waste') waste.pop();
-            if(info.type === 'tab') tab[info.x].pop();
-            found[i].push(card);
-            score += 10; moves++;
-            render();
-            checkWin();
-            return;
+        dragInfo.cards.forEach(c => c.classList.add('dragging'));
+        el.setPointerCapture(e.pointerId);
+    };
+
+    el.onpointermove = (e) => {
+        if(!dragInfo) return;
+        let dx = e.clientX - dragInfo.startX, dy = e.clientY - dragInfo.startY;
+        dragInfo.cards.forEach(c => {
+            c.style.left = (parseFloat(c.dataset.ox || c.style.left) + dx) + 'px';
+            c.style.top = (parseFloat(c.dataset.oy || c.style.top) + dy) + 'px';
+            if(!c.dataset.ox) { c.dataset.ox = parseFloat(c.style.left) - dx; c.dataset.oy = parseFloat(c.style.top) - dy; }
+        });
+    };
+
+    el.onpointerup = (e) => {
+        if(!dragInfo) return;
+        let dropped = false;
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        const slot = target ? target.closest('.slot, .card') : null;
+
+        if(slot) {
+            let x = Math.round(parseFloat(slot.style.left) / (cw + gap));
+            if (isValidMove(dragInfo.info, x)) {
+                executeMove(dragInfo.info, x);
+                dropped = true;
+            }
         }
-    }
+
+        dragInfo.cards.forEach(c => { delete c.dataset.ox; delete c.dataset.oy; });
+        dragInfo = null;
+        render();
+    };
+
+    el.ondblclick = () => { // Snel naar foundation
+        for(let i=0; i<4; i++) if(isValidFoundation(info, i)) { executeFoundation(info, i); return; }
+    };
 }
 
-function checkWin() {
-    let tot = found.reduce((a, b) => a + b.length, 0);
-    if(tot === 52) alert("Gefeliciteerd Neeltje! Je hebt gewonnen!");
+function isValidMove(src, tx) {
+    let card = getCard(src);
+    if(tx < 0 || tx > 6) return false;
+    let targetCol = tab[tx];
+    if(targetCol.length === 0) return card.r === 'K';
+    let top = targetCol[targetCol.length-1];
+    return isRed(card) !== isRed(top) && R.indexOf(card.r) === R.indexOf(top.r) - 1;
 }
 
+function isValidFoundation(src, fi) {
+    let card = getCard(src);
+    if(src.type === 'tab' && tab[src.x].length - 1 !== src.y) return false; // Alleen bovenste
+    let target = found[fi];
+    if(target.length === 0) return card.r === 'A';
+    let top = target[target.length-1];
+    return card.s === top.s && R.indexOf(card.r) === R.indexOf(top.r) + 1;
+}
+
+function executeMove(src, tx) {
+    let cards = [];
+    if(src.type === 'waste') cards = [waste.pop()];
+    else if(src.type === 'tab') cards = tab[src.x].splice(src.y);
+    else if(src.type === 'found') cards = [found[src.i].pop()];
+    tab[tx].push(...cards);
+    moves++; score += 5;
+}
+
+function executeFoundation(src, fi) {
+    let card = (src.type === 'waste') ? waste.pop() : tab[src.x].pop();
+    found[fi].push(card);
+    moves++; score += 10; render();
+}
+
+function getCard(info) {
+    if(info.type === 'waste') return waste[waste.length-1];
+    if(info.type === 'tab') return tab[info.x][info.y];
+    if(info.type === 'found') return found[info.i][found[info.i].length-1];
+}
+
+function isRed(c) { return c.s === '♥' || c.s === '♦'; }
 window.onresize = render;
 </script>
 </body>
