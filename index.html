@@ -2,226 +2,321 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Solitaire FINAL MASTER</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Solitaire Neeltje Luxe</title>
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <style>
-:root{
-  --bg:#05060a;
-  --accent:#f5c842;
-  --cyan:#00e5ff;
-  --red:#ff3b6b;
+:root {
+    --bg-dark: #070b14;
+    --accent: #f5c840;
+    --card-white: #ffffff;
+    --red: #ff3b6b;
+    --black: #2c3e50;
+    --shadow: 0 12px 30px rgba(0,0,0,0.5);
+    --radius: 12px;
 }
 
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-
-html,body{
-  width:100%;height:100%;
-  overflow:hidden;
-  font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;
-  background:
-    radial-gradient(circle at 20% 20%, #1a2d66 0%, transparent 40%),
-    radial-gradient(circle at 80% 80%, #0a2a2f 0%, transparent 45%),
-    linear-gradient(180deg,#070b18,#05060a);
-  color:#fff;
+* {
+    box-sizing: border-box;
+    margin: 0; padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 
-#app{
-  position:fixed;inset:0;
-  display:flex;
-  flex-direction:column;
-  padding-top:env(safe-area-inset-top);
-  padding-bottom:env(safe-area-inset-bottom);
+body, html {
+    width: 100%; height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg-dark);
+    overflow: hidden;
+    color: #fff;
 }
 
-/* TOP */
-#top{
-  display:flex;
-  justify-content:space-between;
-  padding:10px;
-  background:rgba(255,255,255,0.04);
-  backdrop-filter: blur(12px);
-  border-bottom:1px solid rgba(255,255,255,0.08);
+/* De achtergrond met kleurrijk verloop */
+#app {
+    display: none; height: 100vh; flex-direction: column;
+    background: 
+        radial-gradient(circle at 20% 20%, #1a2d66 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, #0a2a2f 0%, transparent 45%),
+        linear-gradient(180deg, #070b18, #05060a);
+    padding-top: env(safe-area-inset-top);
 }
 
-.stat{text-align:center;}
-.stat b{font-size:11px;opacity:.5;display:block;}
-.stat span{font-size:16px;color:var(--accent);font-weight:800;}
-
-/* BAR */
-#bar{
-  display:flex;
-  gap:6px;
-  padding:6px;
-  background:rgba(0,0,0,0.35);
+/* TOP BAR */
+#top-bar {
+    display: flex; justify-content: space-around; align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(15px);
+    padding: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
-.btn{
-  flex:1;
-  padding:10px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,0.12);
-  background:linear-gradient(145deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02));
-  color:#fff;
-  font-weight:700;
+.stat { text-align: center; }
+.stat b { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; display: block; opacity: 0.8; }
+.stat span { font-size: 20px; font-weight: 800; color: #fff; }
+
+/* KNOPPEN */
+#nav {
+    display: flex; gap: 8px; padding: 10px;
+    background: rgba(0,0,0,0.2);
 }
 
-/* BOARD */
-#board{
-  flex:1;
-  position:relative;
-  overflow:hidden;
+.btn {
+    flex: 1; padding: 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05); color: #fff; font-weight: bold; cursor: pointer;
+    font-size: 12px; transition: 0.2s;
 }
 
-/* SLOT */
-.slot{
-  position:absolute;
-  border-radius:14px;
-  border:1px dashed rgba(255,255,255,0.15);
-  background:rgba(255,255,255,0.03);
+.btn:active { transform: scale(0.95); background: var(--accent); color: #000; }
+.btn-new { background: linear-gradient(135deg, #f5c840, #d4a017); color: #000; border: none; }
+
+/* HET SPEELVELD */
+#board { flex: 1; position: relative; margin: 10px; }
+
+.slot {
+    position: absolute; border-radius: var(--radius);
+    border: 2px dashed rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.02);
 }
 
-/* CARD */
-.card{
-  position:absolute;
-  border-radius:14px;
-  will-change:transform,left,top;
-  transition:transform .14s ease, left .14s ease, top .14s ease;
+/* KAART DESIGN */
+.card {
+    position: absolute; border-radius: var(--radius);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: var(--shadow);
+    overflow: hidden;
 }
 
-.card.up{
-  background:linear-gradient(145deg,#fff,#f2efe6);
-  box-shadow:
-    0 18px 40px rgba(0,0,0,0.7),
-    0 0 0 1px rgba(245,200,66,0.25),
-    inset 0 1px 0 #fff;
+.card.up {
+    background: linear-gradient(145deg, #ffffff, #f0f0f0);
+    border: 1px solid #ddd;
 }
 
-.card.down{
-  background:linear-gradient(145deg,#0a1a44,#070d22);
-  box-shadow:
-    0 16px 30px rgba(0,0,0,0.75),
-    inset 0 0 0 1px rgba(0,229,255,0.15);
+.card.dn {
+    background: linear-gradient(145deg, #1a3fbf, #0a1870);
+    border: 3px solid #fff;
 }
 
-.card.up::after{
-  content:"";
-  position:absolute;inset:3px;
-  border-radius:11px;
-  border:1px solid rgba(245,200,66,0.25);
+/* Kaart Inhoud */
+.card-content { position: relative; width: 100%; height: 100%; padding: 8px; color: #000; }
+.card-rank { font-size: 18px; font-weight: 900; line-height: 1; position: absolute; top: 8px; left: 8px; }
+.card-suit-big { 
+    position: absolute; inset: 0; display: flex; align-items: center; 
+    justify-content: center; font-size: 45px; opacity: 0.1; 
+}
+.red { color: var(--red); }
+.black { color: var(--black); }
+
+/* MENU */
+#menu {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: var(--bg-dark); gap: 20px;
 }
 
-/* text */
-.tl{position:absolute;top:6px;left:8px;font-weight:900;font-size:14px;}
-.br{position:absolute;bottom:6px;right:8px;transform:rotate(180deg);font-weight:900;font-size:14px;}
-.mid{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;opacity:.9;}
+.menu-opt {
+    width: 80%; max-width: 320px; padding: 25px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px; text-align: center; cursor: pointer;
+}
+.menu-opt h2 { color: var(--accent); margin-bottom: 5px; }
+
 </style>
 </head>
-
 <body>
 
+<div id="menu">
+    <h1 style="letter-spacing: 5px; margin-bottom: 30px;">NEELTJE PATIENCE</h1>
+    <div class="menu-opt" onclick="start(1)"><h2>NIVEAU 1</h2><p>Makkelijk</p></div>
+    <div class="menu-opt" onclick="start(3)"><h2>NIVEAU 3</h2><p>Moeilijk</p></div>
+</div>
+
 <div id="app">
-  <div id="top">
-    <div class="stat"><b>Score</b><span id="sc">0</span></div>
-    <div class="stat"><b>Time</b><span id="ti">0:00</span></div>
-    <div class="stat"><b>Moves</b><span id="mv">0</span></div>
-  </div>
+    <div id="top-bar">
+        <div class="stat"><b>Tijd</b><span id="time">0:00</span></div>
+        <div class="stat"><b>Score</b><span id="score">0</span></div>
+        <div class="stat"><b>Zetten</b><span id="moves">0</span></div>
+    </div>
+    
+    <div id="nav">
+        <button class="btn" onclick="location.reload()">MENU</button>
+        <button class="btn btn-new" onclick="init()">NIEUW SPEL</button>
+    </div>
 
-  <div id="bar">
-    <button class="btn" onclick="nieuw()">New</button>
-    <button class="btn" onclick="undo()">Undo</button>
-    <button class="btn" onclick="hint()">Hint</button>
-  </div>
-
-  <div id="board"></div>
+    <div id="board"></div>
 </div>
 
 <script>
+const S = ['♠', '♥', '♦', '♣'];
+const R = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+let stock = [], waste = [], found = [[],[],[],[]], tab = [[],[],[],[],[],[],[]];
+let diff = 1, moves = 0, score = 0, secs = 0, timer = null;
+let cw, ch, gap = 8;
 
-const S=["♠","♥","♦","♣"];
-const R=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+function start(d) {
+    diff = d;
+    document.getElementById('menu').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    init();
+}
 
-let board=[],stock=[],waste=[];
-let cw,ch,gap=8;
+function init() {
+    moves = 0; score = 0; secs = 0;
+    document.getElementById('moves').textContent = '0';
+    document.getElementById('score').textContent = '0';
+    clearInterval(timer);
+    timer = setInterval(() => {
+        secs++;
+        let m = Math.floor(secs/60), s = secs%60;
+        document.getElementById('time').textContent = m + ":" + (s<10?'0':'') + s;
+    }, 1000);
 
-function nieuw(){
-  let d=[];
-  for(let s=0;s<4;s++)for(let r=0;r<13;r++)
-    d.push({s:S[s],r:R[r],up:false});
+    let deck = [];
+    S.forEach(s => R.forEach(r => deck.push({s, r, up: false})));
+    deck.sort(() => Math.random() - 0.5);
 
-  d.sort(()=>Math.random()-0.5);
-
-  board=[[],[],[],[],[],[],[]];
-  let i=0;
-
-  for(let c=0;c<7;c++){
-    for(let j=0;j<=c;j++){
-      let k=d[i++];
-      k.up=(j===c);
-      board[c].push(k);
+    tab = [[],[],[],[],[],[],[]];
+    for(let i=0; i<7; i++) {
+        for(let j=0; j<=i; j++) {
+            let k = deck.pop();
+            k.up = (i === j);
+            tab[i].push(k);
+        }
     }
-  }
-
-  stock=d.slice(i);
-  waste=[];
-  render();
+    stock = deck;
+    waste = [];
+    found = [[],[],[],[]];
+    render();
 }
 
-function render(){
-  let b=document.getElementById("board");
-  b.innerHTML="";
+function render() {
+    const b = document.getElementById('board');
+    b.innerHTML = '';
+    cw = (b.clientWidth - (6 * gap)) / 7;
+    ch = cw * 1.45;
 
-  let W=b.clientWidth;
-  cw=(W-60)/7;
-  ch=cw*1.45;
+    // Slots bovenaan
+    for(let i=0; i<7; i++) {
+        let s = document.createElement('div');
+        s.className = 'slot';
+        s.style.width = cw+'px'; s.style.height = ch+'px';
+        s.style.left = (i*(cw+gap))+'px'; s.style.top = '0px';
+        b.appendChild(s);
+    }
 
-  let top=10;
+    // Voorraad (Stock)
+    if(stock.length > 0) {
+        let k = drawK({up:false}, 6*(cw+gap), 0);
+        k.onclick = () => {
+            let n = diff === 3 ? Math.min(3, stock.length) : 1;
+            for(let i=0; i<n; i++) {
+                let c = stock.pop();
+                c.up = true;
+                waste.push(c);
+            }
+            moves++; render();
+        };
+        b.appendChild(k);
+    } else {
+        // Recycle stock
+        let r = document.createElement('div');
+        r.className = 'slot';
+        r.style.width = cw+'px'; r.style.height = ch+'px';
+        r.style.left = 6*(cw+gap)+'px';
+        r.onclick = () => {
+            stock = waste.reverse().map(c => ({...c, up:false}));
+            waste = []; render();
+        };
+        b.appendChild(r);
+    }
 
-  for(let c=0;c<7;c++){
-    let x=c*(cw+gap);
-    let y=top+ch+gap;
+    // Aflegstapel (Waste)
+    if(waste.length > 0) {
+        let k = drawK(waste[waste.length-1], 5*(cw+gap), 0);
+        k.onclick = () => autoMove({type:'waste'});
+        b.appendChild(k);
+    }
 
-    board[c].forEach((k,i)=>{
-      let el=document.createElement("div");
-      el.className="card "+(k.up?"up":"down");
-      el.style.width=cw+"px";
-      el.style.height=ch+"px";
-      el.style.left=x+"px";
-      el.style.top=y+"px";
-
-      if(k.up){
-        el.innerHTML=`
-          <div class="tl">${k.r}<br>${k.s}</div>
-          <div class="mid">${k.s}</div>
-          <div class="br">${k.r}<br>${k.s}</div>
-        `;
-      }
-
-      b.appendChild(el);
-      y+=k.up?18:10;
+    // Tableau (Kolommen)
+    tab.forEach((col, x) => {
+        let yPos = ch + gap;
+        col.forEach((card, y) => {
+            let k = drawK(card, x*(cw+gap), yPos);
+            if(card.up) {
+                // Alleen bovenste kaart van kolom is klikbaar voor foundation
+                if(y === col.length - 1) k.onclick = () => autoMove({type:'tab', x, y});
+            } else {
+                // Draai om als het de onderste is
+                if(y === col.length - 1) k.onclick = () => { card.up = true; score+=5; render(); };
+            }
+            b.appendChild(k);
+            yPos += card.up ? cw*0.35 : cw*0.15;
+        });
     });
-  }
+
+    // Foundation (Bovenin)
+    found.forEach((f, i) => {
+        if(f.length > 0) {
+            let k = drawK(f[f.length-1], i*(cw+gap), 0);
+            b.appendChild(k);
+        }
+    });
 }
 
-/* ===== PLACEHOLDERS (game engine intact uitbreidbaar) ===== */
-function undo(){}
-function hint(){}
+function drawK(card, x, y) {
+    const el = document.createElement('div');
+    el.className = `card ${card.up ? 'up' : 'dn'}`;
+    el.style.width = cw + 'px';
+    el.style.height = ch + 'px';
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
 
-/* timer */
-setInterval(()=>{
-  let t=document.getElementById("ti");
-  let s=parseInt(t.dataset.s||0)+1;
-  t.dataset.s=s;
-  t.textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
-},1000);
+    if(card.up) {
+        const isRed = card.s === '♥' || card.s === '♦';
+        el.innerHTML = `
+            <div class="card-content ${isRed ? 'red' : 'black'}">
+                <div class="card-rank">${card.r}<br>${card.s}</div>
+                <div class="card-suit-big">${card.s}</div>
+            </div>`;
+    }
+    return el;
+}
 
-nieuw();
-window.addEventListener("resize",render);
+function autoMove(info) {
+    let card;
+    if(info.type === 'waste') card = waste[waste.length-1];
+    if(info.type === 'tab') card = tab[info.x][info.y];
 
+    for(let i=0; i<4; i++) {
+        let target = found[i];
+        let ok = false;
+        if(target.length === 0) {
+            if(card.r === 'A') ok = true;
+        } else {
+            let top = target[target.length-1];
+            if(card.s === top.s && R.indexOf(card.r) === R.indexOf(top.r) + 1) ok = true;
+        }
+
+        if(ok) {
+            if(info.type === 'waste') waste.pop();
+            if(info.type === 'tab') tab[info.x].pop();
+            found[i].push(card);
+            score += 10; moves++;
+            render();
+            checkWin();
+            return;
+        }
+    }
+}
+
+function checkWin() {
+    let tot = found.reduce((a, b) => a + b.length, 0);
+    if(tot === 52) alert("Gefeliciteerd Neeltje! Je hebt gewonnen!");
+}
+
+window.onresize = render;
 </script>
-
 </body>
 </html>
