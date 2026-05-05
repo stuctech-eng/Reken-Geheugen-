@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Solitaire Neeltje - Smooth Flip & Drag</title>
+<title>Solitaire Neeltje - Versie 9.2 (Zwevend Slepen)</title>
 
 <style>
 :root {
@@ -12,6 +12,8 @@
     --red: #ff3b6b;
     --black: #2c3e50;
     --anim-speed: 0.7s;
+    /* De 'zweef' snelheid voor tijdens het slepen */
+    --float-speed: 0.15s; 
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -20,7 +22,7 @@ body {
     width: 100%; height: 100vh;
     font-family: -apple-system, sans-serif;
     background: var(--bg); overflow: hidden;
-    touch-action: none; /* Cruciaal voor slepen */
+    touch-action: none;
 }
 
 #app { display: none; height: 100%; flex-direction: column; background: radial-gradient(circle, #1a2d66, #070b18); }
@@ -37,16 +39,20 @@ body {
     position: absolute;
     border-radius: 10px;
     transform-style: preserve-3d;
-    transition: left var(--anim-speed) ease-in-out, top var(--anim-speed) ease-in-out;
+    /* Standaard transitie voor automatisch verplaatsen */
+    transition: left var(--anim-speed) cubic-bezier(0.4, 0, 0.2, 1), 
+                top var(--anim-speed) cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 10;
     cursor: grab;
 }
 
-/* FIX: Geen vertraging tijdens het slepen */
+/* VERSIE 9.2: Zwevend effect door een korte transitie te behouden */
 .card.dragging {
-    transition: none !important;
+    transition: left var(--float-speed) ease-out, 
+                top var(--float-speed) ease-out !important;
     z-index: 1000 !important;
-    transform: scale(1.05);
+    transform: scale(1.08) translateY(-10px); /* Kaart 'vliegt' iets omhoog */
+    filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5));
 }
 
 .card-inner {
@@ -87,9 +93,8 @@ body {
 <body>
 
 <div id="menu">
-    <h1 style="color:var(--accent)">SOLITAIRE</h1>
-    <div class="btn-start" onclick="start(1)">MAKKELIJK</div>
-    <div class="btn-start" onclick="start(3)">MOEILIJK</div>
+    <h1 style="color:var(--accent)">SOLITAIRE 9.2</h1>
+    <div class="btn-start" onclick="start(1)">START GAME</div>
 </div>
 
 <div id="app">
@@ -128,28 +133,24 @@ function render() {
     cw = (b.clientWidth - (6 * gap)) / 7;
     ch = cw * 1.4;
 
-    // Slots
     for(let i=0; i<7; i++) {
         let s = document.createElement('div');
         s.className = 'slot'; s.style.width = cw+'px'; s.style.height = ch+'px';
         s.style.left = (i*(cw+gap))+'px'; b.appendChild(s);
     }
 
-    // Stock
     if(stock.length > 0) {
         let k = createK({up:false}, 6*(cw+gap), 0);
         k.onclick = drawStock;
         b.appendChild(k);
     }
 
-    // Waste
     waste.forEach((card, i) => {
         let k = createK(card, 5*(cw+gap), 0);
         if(i === waste.length - 1) k.onpointerdown = startDrag;
         b.appendChild(k);
     });
 
-    // Tableau
     tab.forEach((col, x) => {
         col.forEach((card, y) => {
             let k = createK(card, x*(cw+gap), ch + gap + (y*20));
@@ -180,11 +181,11 @@ function createK(card, x, y) {
     return el;
 }
 
-// SLEEP LOGICA
 function startDrag(e) {
     dragTarget = e.currentTarget;
     dragTarget.classList.add('dragging');
     const rect = dragTarget.getBoundingClientRect();
+    // We pakken het midden voor een rustiger gevoel
     offset.x = e.clientX - rect.left;
     offset.y = e.clientY - rect.top;
     dragTarget.setPointerCapture(e.pointerId);
@@ -192,6 +193,7 @@ function startDrag(e) {
 
 window.onpointermove = (e) => {
     if (!dragTarget) return;
+    // De card.dragging CSS zorgt voor de 'zwevende' vertraging van 0.15s
     dragTarget.style.left = (e.clientX - offset.x) + 'px';
     dragTarget.style.top = (e.clientY - offset.y) + 'px';
 };
@@ -200,8 +202,8 @@ window.onpointerup = () => {
     if (!dragTarget) return;
     dragTarget.classList.remove('dragging');
     dragTarget = null;
-    render(); // Springt terug naar positie omdat we nog geen 'drop' logica hebben
-};
+    render();
+}
 
 function drawStock() {
     if(stock.length === 0) return;
