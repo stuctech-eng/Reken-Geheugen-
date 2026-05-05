@@ -3,30 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Werkende Shuffle Preview</title>
+<title>Shuffle Test (Robuust)</title>
 
 <style>
 body {
     margin: 0;
-    background: #0b5d3b;
     font-family: -apple-system, system-ui;
-    overflow: hidden;
-}
-
-#center {
-    position: absolute;
-    top: 35%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-#tableau {
-    position: absolute;
-    bottom: 10px;
-    width: 100%;
+    background: #0b5d3b;
     display: flex;
-    justify-content: center;
-    gap: 10px;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* STACK /
+#stack {
+    margin-top: 40px;
+    height: 120px;
+    position: relative;
+}
+
+.stack-card {
+    width: 60px;
+    height: 90px;
+    border-radius: 8px;
+    background: linear-gradient(45deg, #1e3a8a, #2563eb);
+    position: absolute;
+    left: 0;
+    top: 0;
+    transition: transform 0.2s;
+}
+
+/ TABLEAU /
+#tableau {
+    margin-top: 40px;
+    display: flex;
+    gap: 8px;
 }
 
 .column {
@@ -38,29 +49,22 @@ body {
     width: 60px;
     height: 90px;
     border-radius: 8px;
-    background: linear-gradient(45deg, #1e3a8a, #2563eb);
+    background: white;
     margin-top: -60px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    color: transparent;
-    transition: transform 0.3s;
-}
-
-.front {
-    background: white;
-    color: black;
 }
 
 .red { color: red; }
 
+/ BUTTON /
 button {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 10;
-    padding: 10px;
+    margin-top: 20px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: none;
 }
 </style>
 </head>
@@ -69,7 +73,7 @@ button {
 
 <button onclick="start()">New Game</button>
 
-<div id="center"></div>
+<div id="stack"></div>
 <div id="tableau"></div>
 
 <script>
@@ -86,7 +90,7 @@ function rng(seed) {
 }
 
 // Deck
-function deck() {
+function createDeck() {
     const s = ['♠','♥','♦','♣'];
     const v = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
     let d = [];
@@ -130,33 +134,34 @@ function deal(d) {
 
 // Render stack
 function renderStack() {
-    const center = document.getElementById("center");
-    center.innerHTML = "";
+    const stack = document.getElementById("stack");
+    stack.innerHTML = "";
 
-    for (let i=0;i<20;i++) {
+    for (let i=0;i<15;i++) {
         let c = document.createElement("div");
-        c.className="card";
-        c.style.position="absolute";
-        c.style.top = (i0.5)+"px";
-        center.appendChild(c);
+        c.className = "stack-card";
+        c.style.transform = translate(${i*0.5}px, ${i*0.5}px);
+        stack.appendChild(c);
     }
 }
 
-// Shuffle animatie
-async function shuffleAnim() {
-    const cards = document.querySelectorAll("#center .card");
+// Shuffle animatie (zichtbaar!)
+async function animateStack() {
+    const cards = document.querySelectorAll(".stack-card");
 
-    for (let i=0;i<10;i++) {
+    for (let i=0;i<8;i++) {
         cards.forEach((c,idx)=>{
-            let x = (idx%2===0? -20:20);
-            c.style.transform = translateX(${x}px);
+            let dir = idx%2===0 ? -10 : 10;
+            c.style.transform = translate(${dir}px, 0px);
         });
-        await new Promise(r=>setTimeout(r,100));
+
+        await new Promise(r=>setTimeout(r,120));
 
         cards.forEach(c=>{
-            c.style.transform = translateX(0px);
+            c.style.transform = translate(0px, 0px);
         });
-        await new Promise(r=>setTimeout(r,100));
+
+        await new Promise(r=>setTimeout(r,120));
     }
 }
 
@@ -174,7 +179,6 @@ function renderTableau(t) {
             c.className="card";
 
             if (card.faceUp) {
-                c.classList.add("front");
                 c.textContent = card.value + card.suit;
                 if (card.color==="red") c.classList.add("red");
             }
@@ -188,19 +192,21 @@ function renderTableau(t) {
 
 // Start
 async function start() {
-    document.getElementById("tableau").innerHTML="";
-    renderStack();
 
-    await shuffleAnim();
+    document.getElementById("tableau").innerHTML = "";
+
+    renderStack();
+    await animateStack();
 
     const r = rng(Date.now());
-    const d = shuffle(deck(), r);
+    const d = shuffle(createDeck(), r);
     const t = deal(d);
 
-    document.getElementById("center").innerHTML="";
+    document.getElementById("stack").innerHTML = "";
     renderTableau(t);
 }
 
+// Init
 start();
 
 </script>
