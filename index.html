@@ -1,99 +1,196 @@
-<style>
-    :root {
-        --anim-speed: 0.6s;
-        --bezier: cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Solitaire Smooth Motion Pro</title>
+    <style>
+        :root {
+            --card-w: 85px;
+            --card-h: 125px;
+            --anim-speed: 0.8s;
+            --bezier: cubic-bezier(0.4, 0, 0.2, 1);
+            --bg-color: #070b14;
+        }
 
-    /* Het speelveld */
-    #board {
-        position: relative;
-        width: 100%; height: 100vh;
-        perspective: 1500px;
-        touch-action: none; /* Cruciaal voor slepen op mobiel */
-    }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-    /* De Kaart */
-    .card {
-        position: absolute;
-        width: 90px; height: 130px;
-        transition: left var(--anim-speed) var(--bezier), top var(--anim-speed) var(--bezier);
-        z-index: 10;
-        cursor: grab;
-    }
+        body { 
+            background: var(--bg-color); 
+            margin: 0; 
+            overflow: hidden; 
+            font-family: -apple-system, sans-serif;
+            touch-action: none; /* Voorkomt scrollen tijdens slepen */
+        }
 
-    .card.dragging {
-        transition: none !important; /* Geen vertraging tijdens het slepen zelf */
-        z-index: 1000 !important;
-        transform: scale(1.05); /* Licht optillen tijdens slepen */
-    }
+        #board {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at 50% 50%, #1a2d66 0%, #070b14 100%);
+            perspective: 1500px; /* Cruciaal voor 3D effect */
+        }
 
-    .card-inner {
-        position: relative;
-        width: 100%; height: 100%;
-        transform-style: preserve-3d;
-        transition: transform var(--anim-speed) var(--bezier);
-    }
+        /* KAART BASIS */
+        .card {
+            position: absolute;
+            width: var(--card-w);
+            height: var(--card-h);
+            transition: left var(--anim-speed) var(--bezier), top var(--anim-speed) var(--bezier);
+            cursor: grab;
+            z-index: 10;
+        }
 
-    /* Flip States */
-    .card.dn .card-inner { transform: rotateY(180deg); }
-    .card.up .card-inner { transform: rotateY(0deg); }
+        /* Directe respons tijdens slepen */
+        .card.dragging {
+            transition: none !important;
+            z-index: 1000 !important;
+            transform: scale(1.05);
+            filter: drop-shadow(0 15px 30px rgba(0,0,0,0.5));
+        }
 
-    .card-face {
-        position: absolute; inset: 0;
-        backface-visibility: hidden;
-        border-radius: 10px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    }
+        /* DE 3D DRAAI-LAAG */
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform var(--anim-speed) var(--bezier);
+        }
 
-    .card-front { background: white; color: black; }
-    .card-back { 
-        background: linear-gradient(135deg, #1e40af, #1e3a8a); 
-        border: 2px solid #fff; 
-        transform: rotateY(180deg); 
-    }
-</style>
+        /* FLIP STATES */
+        .card.dn .card-inner { transform: rotateY(180deg); }
+        .card.up .card-inner { transform: rotateY(0deg); }
+
+        .card-face {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .card-front {
+            background: #ffffff;
+            color: #000;
+            transform: rotateY(0deg);
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #1e40af, #1e3a8a);
+            background-image: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 10px 10px;
+            border: 3px solid #fff;
+            transform: rotateY(180deg);
+        }
+
+        .card-content {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .suit-center {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            opacity: 0.1;
+        }
+    </style>
+</head>
+<body>
+
+<div id="board">
+    <!-- De kaarten worden hier gegenereerd -->
+</div>
 
 <script>
-    // SLEEP LOGICA (DRAG & DROP)
+    const board = document.getElementById('board');
     let dragTarget = null;
     let offset = { x: 0, y: 0 };
 
-    function makeDraggable(el) {
-        el.onpointerdown = (e) => {
-            // Alleen open kaarten slepen
-            if (el.classList.contains('dn')) return;
+    /**
+     * Maakt een fysieke kaart aan
+     */
+    function createCard(rank, suit, x, y, isUp = false) {
+        const card = document.createElement('div');
+        card.className = `card ${isUp ? 'up' : 'dn'}`;
+        card.style.left = x + 'px';
+        card.style.top = y + 'px';
+        
+        const isRed = suit === '♥' || suit === '♦';
+        card.innerHTML = `
+            <div class="card-inner">
+                <div class="card-face card-front">
+                    <div class="card-content" style="color: ${isRed ? '#ff3b6b' : '#2c3e50'}">
+                        <div>${rank}<br>${suit}</div>
+                        <div class="suit-center">${suit}</div>
+                    </div>
+                </div>
+                <div class="card-face card-back"></div>
+            </div>`;
 
-            dragTarget = el;
-            el.classList.add('dragging');
-            
-            // Bereken waar de vinger de kaart raakt
-            const rect = el.getBoundingClientRect();
-            offset.x = e.clientX - rect.left;
-            offset.y = e.clientY - rect.top;
-
-            el.setPointerCapture(e.pointerId);
-        };
-
-        el.onpointermove = (e) => {
-            if (!dragTarget) return;
-            // Volg de vinger/muis direct
-            dragTarget.style.left = (e.clientX - offset.x) + 'px';
-            dragTarget.style.top = (e.clientY - offset.y) + 'px';
-        };
-
-        el.onpointerup = (e) => {
-            if (!dragTarget) return;
-            dragTarget.classList.remove('dragging');
-            // Hier komt de logica om te checken of de kaart op een stapel ligt
-            dragTarget = null;
-        };
+        card.onpointerdown = startDrag;
+        board.appendChild(card);
+        return card;
     }
 
-    // ANIMATIE LOGICA (VOOR HET OMDRAAIEN)
-    function flipCard(cardEl) {
-        cardEl.offsetHeight; // Forceer browser-check
+    /**
+     * Sleep-logica
+     */
+    function startDrag(e) {
+        if (this.classList.contains('dn')) return; // Dichte kaarten niet slepen
+        
+        dragTarget = this;
+        dragTarget.classList.add('dragging');
+        
+        const rect = dragTarget.getBoundingClientRect();
+        offset.x = e.clientX - rect.left;
+        offset.y = e.clientY - rect.top;
+        
+        dragTarget.setPointerCapture(e.pointerId);
+    }
+
+    window.onpointermove = (e) => {
+        if (!dragTarget) return;
+        dragTarget.style.left = (e.clientX - offset.x) + 'px';
+        dragTarget.style.top = (e.clientY - offset.y) + 'px';
+    };
+
+    window.onpointerup = (e) => {
+        if (!dragTarget) return;
+        dragTarget.classList.remove('dragging');
+        dragTarget = null;
+    };
+
+    /**
+     * De veilige Flip-functie die de animatie garandeert
+     */
+    function safeFlip(cardEl) {
+        // Forceer een 'reflow' zodat de browser de startpositie begrijpt
+        cardEl.offsetHeight; 
+        
         requestAnimationFrame(() => {
             cardEl.classList.replace('dn', 'up');
         });
     }
+
+    // --- TEST SCENE ---
+    // Maak een dichte kaart
+    const testKaart = createCard('A', '♠', 50, 50, false);
+    
+    // Draai hem na 1.5 seconde rustig om en verplaats hem
+    setTimeout(() => {
+        testKaart.style.left = '200px';
+        safeFlip(testKaart);
+    }, 1500);
+
 </script>
+</body>
+</html>
