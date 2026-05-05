@@ -3,62 +3,74 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shuffle Preview</title>
+<title>Werkende Shuffle Preview</title>
 
 <style>
 body {
     margin: 0;
-    font-family: -apple-system, system-ui;
     background: #0b5d3b;
+    font-family: -apple-system, system-ui;
     overflow: hidden;
 }
 
-header {
+#center {
     position: absolute;
-    top: 0;
-    width: 100%;
-    padding: 10px;
-    background: rgba(0,0,0,0.3);
-    z-index: 10;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
-button {
-    padding: 10px 14px;
-    border-radius: 8px;
-    border: none;
+#tableau {
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
 }
 
 .card {
-    width: 70px;
-    height: 100px;
+    width: 60px;
+    height: 90px;
     border-radius: 8px;
     background: linear-gradient(45deg, #1e3a8a, #2563eb);
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    transition: all 0.4s ease;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-}
-
-.front {
-    background: white;
+    margin-top: -60px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
+    color: transparent;
+    transition: transform 0.3s;
+}
+
+.front {
+    background: white;
+    color: black;
 }
 
 .red { color: red; }
 
+button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    padding: 10px;
+}
 </style>
 </head>
 
 <body>
 
-<header>
-    <button onclick="start()">Shuffle Preview</button>
-</header>
+<button onclick="start()">New Game</button>
+
+<div id="center"></div>
+<div id="tableau"></div>
 
 <script>
 
@@ -74,113 +86,121 @@ function rng(seed) {
 }
 
 // Deck
-function createDeck() {
-    const suits = ['♠','♥','♦','♣'];
-    const vals = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-
-    let deck = [];
-    suits.forEach(s => {
-        vals.forEach((v,i) => {
-            deck.push({
-                suit:s,
-                value:v,
+function deck() {
+    const s = ['♠','♥','♦','♣'];
+    const v = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+    let d = [];
+    s.forEach(suit=>{
+        v.forEach((val,i)=>{
+            d.push({
+                suit,
+                value:val,
                 rank:i+1,
-                color:(s==='♥'||s==='♦')?'red':'black'
+                color:(suit==='♥'||suit==='♦')?'red':'black'
             });
         });
     });
-    return deck;
-}
-
-// Shuffle
-function shuffle(deck, r) {
-    let d = deck.slice();
-    for (let i = d.length-1; i>0; i--) {
-        let j = (r()*(i+1))|0;
-        [d[i], d[j]] = [d[j], d[i]];
-    }
     return d;
 }
 
-// Create DOM
-function createCards(deck) {
-    return deck.map(card => {
-        const el = document.createElement("div");
-        el.className = "card";
-        document.body.appendChild(el);
-        return el;
-    });
-}
-
-// Shuffle animation (duidelijker)
-async function shuffleAnim(cards) {
-    for (let i = 0; i < 15; i++) {
-        cards.forEach((c, idx) => {
-            const spread = (idx % 2 === 0 ? -1 : 1);
-            const x = spread * (50 + Math.random()*100);
-            const y = (Math.random() - 0.5) * 80;
-            const r = (Math.random() - 0.5) * 180;
-
-            c.style.transform = translate(${x}px, ${y}px) rotate(${r}deg);
-        });
-
-        await new Promise(r => setTimeout(r, 80));
+// Shuffle
+function shuffle(d, r) {
+    let a = d.slice();
+    for (let i=a.length-1;i>0;i--) {
+        let j = (r()(i+1))|0;
+        [a[i],a[j]]=[a[j],a[i]];
     }
-
-    // terug naar stapel
-    cards.forEach(c => {
-        c.style.transform = "translate(-50%, -50%)";
-    });
-
-    await new Promise(r => setTimeout(r, 300));
+    return a;
 }
 
 // Deal
-async function deal(deck, cards) {
-    let index = 0;
+function deal(d) {
+    let t=[], idx=0;
+    for (let c=0;c<7;c++) {
+        let pile=[];
+        for (let r=0;r<=c;r++) {
+            let card={...d[idx++]};
+            card.faceUp=(r===c);
+            pile.push(card);
+        }
+        t.push(pile);
+    }
+    return t;
+}
 
-    for (let col = 0; col < 7; col++) {
-        for (let row = 0; row <= col; row++) {
+// Render stack
+function renderStack() {
+    const center = document.getElementById("center");
+    center.innerHTML = "";
 
-            const c = cards[index];
-            const data = deck[index];
+    for (let i=0;i<20;i++) {
+        let c = document.createElement("div");
+        c.className="card";
+        c.style.position="absolute";
+        c.style.top = (i0.5)+"px";
+        center.appendChild(c);
+    }
+}
 
-            const x = 20 + col * 80;
-            const y = 120 + row * 30;
+// Shuffle animatie
+async function shuffleAnim() {
+    const cards = document.querySelectorAll("#center .card");
 
-            c.style.left = x + "px";
-            c.style.top = y + "px";
-            c.style.transform = "none";
+    for (let i=0;i<10;i++) {
+        cards.forEach((c,idx)=>{
+            let x = (idx%2===0? -20:20);
+            c.style.transform = translateX(${x}px);
+        });
+        await new Promise(r=>setTimeout(r,100));
 
-            if (row === col) {
+        cards.forEach(c=>{
+            c.style.transform = translateX(0px);
+        });
+        await new Promise(r=>setTimeout(r,100));
+    }
+}
+
+// Render tableau
+function renderTableau(t) {
+    const el = document.getElementById("tableau");
+    el.innerHTML="";
+
+    t.forEach(col=>{
+        let colEl = document.createElement("div");
+        colEl.className="column";
+
+        col.forEach(card=>{
+            let c = document.createElement("div");
+            c.className="card";
+
+            if (card.faceUp) {
                 c.classList.add("front");
-                c.textContent = data.value + data.suit;
-                if (data.color === "red") c.classList.add("red");
+                c.textContent = card.value + card.suit;
+                if (card.color==="red") c.classList.add("red");
             }
 
-            index++;
-            await new Promise(r => setTimeout(r, 70));
-        }
-    }
+            colEl.appendChild(c);
+        });
+
+        el.appendChild(colEl);
+    });
 }
 
 // Start
 async function start() {
+    document.getElementById("tableau").innerHTML="";
+    renderStack();
 
-    // cleanup
-    document.querySelectorAll(".card").forEach(e => e.remove());
+    await shuffleAnim();
 
-    const seed = Date.now();
-    const r = rng(seed);
+    const r = rng(Date.now());
+    const d = shuffle(deck(), r);
+    const t = deal(d);
 
-    const deck = shuffle(createDeck(), r);
-    const cards = createCards(deck);
-
-    await shuffleAnim(cards);
-    await deal(deck, cards);
+    document.getElementById("center").innerHTML="";
+    renderTableau(t);
 }
 
-// auto start
 start();
 
 </script>
