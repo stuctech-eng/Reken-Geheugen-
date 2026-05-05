@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Solitaire FINAL MASTER</title>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<style>
+:root{
+  --bg:#05060a;
+  --accent:#f5c842;
+  --cyan:#00e5ff;
+  --red:#ff3b6b;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+
+html,body{
+  width:100%;height:100%;
+  overflow:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;
+  background:
+    radial-gradient(circle at 20% 20%, #1a2d66 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, #0a2a2f 0%, transparent 45%),
+    linear-gradient(180deg,#070b18,#05060a);
+  color:#fff;
+}
+
+#app{
+  position:fixed;inset:0;
+  display:flex;
+  flex-direction:column;
+  padding-top:env(safe-area-inset-top);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+
+/* TOP */
+#top{
+  display:flex;
+  justify-content:space-between;
+  padding:10px;
+  background:rgba(255,255,255,0.04);
+  backdrop-filter: blur(12px);
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+.stat{text-align:center;}
+.stat b{font-size:11px;opacity:.5;display:block;}
+.stat span{font-size:16px;color:var(--accent);font-weight:800;}
+
+/* BAR */
+#bar{
+  display:flex;
+  gap:6px;
+  padding:6px;
+  background:rgba(0,0,0,0.35);
+}
+
+.btn{
+  flex:1;
+  padding:10px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,0.12);
+  background:linear-gradient(145deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02));
+  color:#fff;
+  font-weight:700;
+}
+
+/* BOARD */
+#board{
+  flex:1;
+  position:relative;
+  overflow:hidden;
+}
+
+/* SLOT */
+.slot{
+  position:absolute;
+  border-radius:14px;
+  border:1px dashed rgba(255,255,255,0.15);
+  background:rgba(255,255,255,0.03);
+}
+
+/* CARD */
+.card{
+  position:absolute;
+  border-radius:14px;
+  will-change:transform,left,top;
+  transition:transform .14s ease, left .14s ease, top .14s ease;
+}
+
+.card.up{
+  background:linear-gradient(145deg,#fff,#f2efe6);
+  box-shadow:
+    0 18px 40px rgba(0,0,0,0.7),
+    0 0 0 1px rgba(245,200,66,0.25),
+    inset 0 1px 0 #fff;
+}
+
+.card.down{
+  background:linear-gradient(145deg,#0a1a44,#070d22);
+  box-shadow:
+    0 16px 30px rgba(0,0,0,0.75),
+    inset 0 0 0 1px rgba(0,229,255,0.15);
+}
+
+.card.up::after{
+  content:"";
+  position:absolute;inset:3px;
+  border-radius:11px;
+  border:1px solid rgba(245,200,66,0.25);
+}
+
+/* text */
+.tl{position:absolute;top:6px;left:8px;font-weight:900;font-size:14px;}
+.br{position:absolute;bottom:6px;right:8px;transform:rotate(180deg);font-weight:900;font-size:14px;}
+.mid{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;opacity:.9;}
+</style>
+</head>
+
+<body>
+
+<div id="app">
+  <div id="top">
+    <div class="stat"><b>Score</b><span id="sc">0</span></div>
+    <div class="stat"><b>Time</b><span id="ti">0:00</span></div>
+    <div class="stat"><b>Moves</b><span id="mv">0</span></div>
+  </div>
+
+  <div id="bar">
+    <button class="btn" onclick="nieuw()">New</button>
+    <button class="btn" onclick="undo()">Undo</button>
+    <button class="btn" onclick="hint()">Hint</button>
+  </div>
+
+  <div id="board"></div>
+</div>
+
+<script>
+
+const S=["♠","♥","♦","♣"];
+const R=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+
+let board=[],stock=[],waste=[];
+let cw,ch,gap=8;
+
+function nieuw(){
+  let d=[];
+  for(let s=0;s<4;s++)for(let r=0;r<13;r++)
+    d.push({s:S[s],r:R[r],up:false});
+
+  d.sort(()=>Math.random()-0.5);
+
+  board=[[],[],[],[],[],[],[]];
+  let i=0;
+
+  for(let c=0;c<7;c++){
+    for(let j=0;j<=c;j++){
+      let k=d[i++];
+      k.up=(j===c);
+      board[c].push(k);
+    }
+  }
+
+  stock=d.slice(i);
+  waste=[];
+  render();
+}
+
+function render(){
+  let b=document.getElementById("board");
+  b.innerHTML="";
+
+  let W=b.clientWidth;
+  cw=(W-60)/7;
+  ch=cw*1.45;
+
+  let top=10;
+
+  for(let c=0;c<7;c++){
+    let x=c*(cw+gap);
+    let y=top+ch+gap;
+
+    board[c].forEach((k,i)=>{
+      let el=document.createElement("div");
+      el.className="card "+(k.up?"up":"down");
+      el.style.width=cw+"px";
+      el.style.height=ch+"px";
+      el.style.left=x+"px";
+      el.style.top=y+"px";
+
+      if(k.up){
+        el.innerHTML=`
+          <div class="tl">${k.r}<br>${k.s}</div>
+          <div class="mid">${k.s}</div>
+          <div class="br">${k.r}<br>${k.s}</div>
+        `;
+      }
+
+      b.appendChild(el);
+      y+=k.up?18:10;
+    });
+  }
+}
+
+/* ===== PLACEHOLDERS (game engine intact uitbreidbaar) ===== */
+function undo(){}
+function hint(){}
+
+/* timer */
+setInterval(()=>{
+  let t=document.getElementById("ti");
+  let s=parseInt(t.dataset.s||0)+1;
+  t.dataset.s=s;
+  t.textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+},1000);
+
+nieuw();
+window.addEventListener("resize",render);
+
+</script>
+
+</body>
+</html>
