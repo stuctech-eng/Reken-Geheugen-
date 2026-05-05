@@ -2,63 +2,47 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Solitaire Neeltje Pro - Full Working Version</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Solitaire Neeltje - De Werkende Versie</title>
     <style>
         :root {
-            --bg: #070b14;
-            --accent: #f5c840;
             --card-w: 85px;
             --card-h: 125px;
-            --anim: 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            --anim-speed: 0.8s;
+            --bezier: cubic-bezier(0.4, 0, 0.2, 1);
+            --bg: #070b14;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-        body { 
-            background: var(--bg); 
-            height: 100vh; 
-            overflow: hidden; 
-            font-family: sans-serif; 
-            touch-action: none; 
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); margin: 0; overflow: hidden; font-family: sans-serif; touch-action: none; }
 
         #board {
             position: relative;
             width: 100vw; height: 100vh;
-            background: radial-gradient(circle at 50% 50%, #1a2d66 0%, #070b14 100%);
+            background: radial-gradient(circle, #1a2d66 0%, #070b14 100%);
             perspective: 1500px;
-            padding: 10px;
         }
 
-        /* Slots */
-        .slot {
-            position: absolute;
-            width: var(--card-w); height: var(--card-h);
-            border: 2px solid rgba(255,255,255,0.05);
-            border-radius: 10px;
-            background: rgba(0,0,0,0.2);
-        }
-
-        /* Kaarten */
+        /* De Kaart Container */
         .card {
             position: absolute;
             width: var(--card-w); height: var(--card-h);
-            transition: left var(--anim), top var(--anim);
+            transition: left var(--anim-speed) var(--bezier), top var(--anim-speed) var(--bezier);
             z-index: 10;
-            cursor: grab;
         }
 
+        /* Tijdens slepen geen animatie-vertraging */
         .card.dragging {
             transition: none !important;
             z-index: 1000 !important;
             transform: scale(1.05);
         }
 
+        /* 3D Draai-effect */
         .card-inner {
             position: relative; width: 100%; height: 100%;
             transform-style: preserve-3d;
-            transition: transform var(--anim);
+            transition: transform var(--anim-speed) var(--bezier);
         }
 
         .card.dn .card-inner { transform: rotateY(180deg); }
@@ -67,139 +51,85 @@
         .card-face {
             position: absolute; inset: 0;
             backface-visibility: hidden;
-            border-radius: 10px;
+            border-radius: 12px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
         .card-front { background: #fff; color: #000; border: 1px solid #ddd; }
         .card-back { 
             background: linear-gradient(135deg, #1e40af, #1e3a8a); 
-            border: 3px solid #fff; 
-            transform: rotateY(180deg); 
+            border: 3px solid #fff; transform: rotateY(180deg); 
         }
 
-        .card-content { padding: 8px; font-weight: bold; font-size: 18px; }
-        .red { color: #ff3b6b; }
-        .black { color: #2c3e50; }
-
-        #ui { position: fixed; bottom: 20px; width: 100%; text-align: center; z-index: 2000; }
-        button { padding: 12px 25px; border-radius: 20px; border: none; background: var(--accent); font-weight: bold; }
+        .card-content { padding: 10px; font-weight: bold; font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
 <div id="board"></div>
-<div id="ui"><button onclick="initGame()">HERSTART SPEL</button></div>
 
 <script>
-const S = ['♠', '♥', '♦', '♣'], R = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-let deck = [], stock = [], waste = [], tab = [[],[],[],[],[],[],[]];
-let dragTarget = null, offset = {x:0, y:0};
+    const board = document.getElementById('board');
+    let dragTarget = null;
+    let offset = { x: 0, y: 0 };
 
-function initGame() {
-    const b = document.getElementById('board');
-    b.innerHTML = '';
-    deck = []; tab = [[],[],[],[],[],[],[]]; waste = [];
-    
-    // Create & Shuffle
-    S.forEach(s => R.forEach(r => deck.push({r, s, up: false})));
-    deck.sort(() => Math.random() - 0.5);
+    function createCard(rank, suit, x, y, isUp = false) {
+        const card = document.createElement('div');
+        card.className = `card ${isUp ? 'up' : 'dn'}`;
+        card.style.left = x + 'px';
+        card.style.top = y + 'px';
+        
+        const isRed = suit === '♥' || suit === '♦';
+        card.innerHTML = `
+            <div class="card-inner">
+                <div class="card-face card-front">
+                    <div class="card-content" style="color: ${isRed ? 'red' : 'black'}">
+                        ${rank}<br>${suit}
+                    </div>
+                </div>
+                <div class="card-face card-back"></div>
+            </div>`;
 
-    // Slots tekenen
-    for(let i=0; i<7; i++) {
-        let s = document.createElement('div');
-        s.className = 'slot';
-        s.style.left = (i * 14) + 'vw';
-        s.style.top = '150px';
-        b.appendChild(s);
+        card.onpointerdown = startDrag;
+        board.appendChild(card);
+        return card;
     }
 
-    // Delen
-    for(let i=0; i<7; i++) {
-        for(let j=0; j<=i; j++) {
-            let cardData = deck.pop();
-            if(j === i) cardData.up = true;
-            tab[i].push(cardData);
-        }
+    function startDrag(e) {
+        if (this.classList.contains('dn')) return;
+        dragTarget = this;
+        dragTarget.classList.add('dragging');
+        const rect = dragTarget.getBoundingClientRect();
+        offset.x = e.clientX - rect.left;
+        offset.y = e.clientY - rect.top;
+        dragTarget.setPointerCapture(e.pointerId);
     }
-    stock = deck;
-    render();
-}
 
-function render() {
-    const b = document.getElementById('board');
-    // We laten de UI elementen staan, maar vernieuwen de kaarten
-    document.querySelectorAll('.card').forEach(c => c.remove());
+    window.onpointermove = (e) => {
+        if (!dragTarget) return;
+        dragTarget.style.left = (e.clientX - offset.x) + 'px';
+        dragTarget.style.top = (e.clientY - offset.y) + 'px';
+    };
 
-    // Tableau tekenen
-    tab.forEach((col, x) => {
-        col.forEach((card, y) => {
-            const el = createCardEl(card, (x * 14) + 'vw', (150 + (y * 25)) + 'px');
-            if(card.up) el.onpointerdown = startDrag;
+    window.onpointerup = () => {
+        if (!dragTarget) return;
+        dragTarget.classList.remove('dragging');
+        dragTarget = null;
+    };
+
+    function safeFlip(cardEl) {
+        cardEl.offsetHeight; // Forceer browser om startpunt te onthouden
+        requestAnimationFrame(() => {
+            cardEl.classList.replace('dn', 'up');
         });
-    });
-
-    // Stock tekenen
-    if(stock.length > 0) {
-        const s = createCardEl({r:'', s:'', up:false}, '84vw', '20px');
-        s.onclick = drawCard;
     }
 
-    // Waste tekenen
-    waste.forEach((card, i) => {
-        const w = createCardEl(card, '70vw', '20px');
-        if(i === waste.length - 1) w.onpointerdown = startDrag;
-    });
-}
-
-function createCardEl(data, x, y) {
-    const el = document.createElement('div');
-    el.className = `card ${data.up ? 'up' : 'dn'}`;
-    el.style.left = x;
-    el.style.top = y;
-    
-    const isRed = data.s === '♥' || data.s === '♦';
-    el.innerHTML = `
-        <div class="card-inner">
-            <div class="card-face card-front">
-                <div class="card-content ${isRed ? 'red' : 'black'}">${data.r}<br>${data.s}</div>
-            </div>
-            <div class="card-face card-back"></div>
-        </div>`;
-    document.getElementById('board').appendChild(el);
-    return el;
-}
-
-function drawCard() {
-    if(stock.length === 0) return;
-    let card = stock.pop();
-    card.up = true;
-    waste.push(card);
-    render();
-}
-
-function startDrag(e) {
-    dragTarget = e.currentTarget;
-    dragTarget.classList.add('dragging');
-    const rect = dragTarget.getBoundingClientRect();
-    offset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    dragTarget.setPointerCapture(e.pointerId);
-}
-
-window.onpointermove = (e) => {
-    if(!dragTarget) return;
-    dragTarget.style.left = (e.clientX - offset.x) + 'px';
-    dragTarget.style.top = (e.clientY - offset.y) + 'px';
-};
-
-window.onpointerup = () => {
-    if(!dragTarget) return;
-    dragTarget.classList.remove('dragging');
-    dragTarget = null;
-    render(); // Spring terug naar positie (hier moet de logica voor loslaten komen)
-};
-
-initGame();
+    // Start-voorbeeld: Kaart trekken
+    const kaart = createCard('K', '♥', 50, 50, false);
+    setTimeout(() => {
+        kaart.style.left = '200px';
+        safeFlip(kaart);
+    }, 1000);
 </script>
 </body>
 </html>
