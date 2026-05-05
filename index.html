@@ -1,144 +1,203 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Solitaire - De Werkende Basis</title>
-    <style>
-        :root {
-            --card-w: 90px;
-            --card-h: 130px;
-            --anim-speed: 0.7s; /* De snelheid van het rustige omdraaien */
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Solitaire Neeltje - Smooth Flip</title>
 
-        body { 
-            background: #0a2e1a; 
-            margin: 0; 
-            overflow: hidden; 
-            touch-action: none; 
-            font-family: sans-serif;
-        }
+<style>
+:root {
+    --bg: #070b14;
+    --accent: #f5c840;
+    --red: #ff3b6b;
+    --black: #2c3e50;
+    --anim-speed: 0.7s; /* Iets trager voor een rustig effect */
+}
 
-        #board {
-            position: relative;
-            width: 100vw; height: 100vh;
-            perspective: 1200px; /* Cruciaal voor het omdraai-effect */
-        }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-        /* DE KAART */
-        .card {
-            position: absolute;
-            width: var(--card-w); height: var(--card-h);
-            /* Transitie alleen voor automatisch verplaatsen */
-            transition: left var(--anim-speed) ease, top var(--anim-speed) ease;
-            z-index: 10;
-            cursor: grab;
-        }
+body {
+    width: 100%; height: 100vh;
+    font-family: -apple-system, sans-serif;
+    background: var(--bg); overflow: hidden;
+}
 
-        /* TIJDENS SLEPEN: Geen transitie, kaart moet direct volgen */
-        .card.dragging {
-            transition: none !important;
-            z-index: 1000 !important;
-            transform: scale(1.05);
-        }
+#app { display: none; height: 100%; flex-direction: column; background: radial-gradient(circle, #1a2d66, #070b18); }
 
-        .card-inner {
-            position: relative;
-            width: 100%; height: 100%;
-            transform-style: preserve-3d;
-            transition: transform var(--anim-speed) cubic-bezier(0.4, 0, 0.2, 1);
-        }
+#header { display: flex; justify-content: space-around; padding: 15px; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.1); }
+.stat b { font-size: 10px; color: var(--accent); display: block; text-transform: uppercase; }
+.stat span { font-size: 18px; font-weight: 800; color: #fff; }
 
-        /* States voor draaien */
-        .card.dn .card-inner { transform: rotateY(180deg); }
-        .card.up .card-inner { transform: rotateY(0deg); }
+#board { flex: 1; position: relative; margin: 10px; perspective: 1500px; }
 
-        .card-face {
-            position: absolute; inset: 0;
-            backface-visibility: hidden;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            border: 1px solid #ddd;
-        }
+.slot { position: absolute; border-radius: 10px; border: 2px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2); }
 
-        .card-front { 
-            background: white; color: black; 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 20px; font-weight: bold; 
-        }
+/* DE KAART STRUCTUUR */
+.card {
+    position: absolute;
+    border-radius: 10px;
+    transform-style: preserve-3d;
+    transition: left var(--anim-speed) ease-in-out, top var(--anim-speed) ease-in-out;
+    z-index: 10;
+}
 
-        .card-back { 
-            background: linear-gradient(135deg, #1e40af, #1e3a8a); 
-            border: 3px solid white; 
-            transform: rotateY(180deg); 
-        }
-    </style>
+.card-inner {
+    position: relative;
+    width: 100%; height: 100%;
+    transform-style: preserve-3d;
+    transition: transform var(--anim-speed) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* FLIP EFFECT */
+.card.dn .card-inner { transform: rotateY(180deg); }
+.card.up .card-inner { transform: rotateY(0deg); }
+
+.card-face {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+}
+
+.card-front { background: #fff; color: #000; }
+.card-back { 
+    background: linear-gradient(135deg, #1e40af, #1e3a8a); 
+    border: 2px solid #fff; 
+    transform: rotateY(180deg); 
+}
+
+.card-content { padding: 8px; height: 100%; display: flex; flex-direction: column; }
+.rank { font-size: 1.2rem; font-weight: bold; line-height: 1; }
+.suit-center { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; opacity: 0.15; }
+
+.red { color: var(--red); }
+.black { color: var(--black); }
+
+/* MENU */
+#menu { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); gap: 20px; }
+.btn-start { padding: 20px 40px; background: rgba(255,255,255,0.1); border: 1px solid var(--accent); border-radius: 15px; color: #fff; text-align: center; width: 250px; }
+</style>
 </head>
 <body>
 
-<div id="board"></div>
+<div id="menu">
+    <h1 style="color:var(--accent)">SOLITAIRE</h1>
+    <div class="btn-start" onclick="start(1)">MAKKELIJK</div>
+    <div class="btn-start" onclick="start(3)">MOEILIJK</div>
+</div>
+
+<div id="app">
+    <div id="header">
+        <div class="stat"><b>Tijd</b><span id="time">0:00</span></div>
+        <div class="stat"><b>Score</b><span id="score">0</span></div>
+    </div>
+    <div id="board"></div>
+</div>
 
 <script>
-    const board = document.getElementById('board');
-    let dragTarget = null;
-    let offset = { x: 0, y: 0 };
+let stock = [], waste = [], tab = [[],[],[],[],[],[],[]], found = [[],[],[],[]];
+let cw, ch, gap = 8, diff = 1;
 
-    function createCard(rank, suit, x, y, isUp = false) {
-        const card = document.createElement('div');
-        card.className = `card ${isUp ? 'up' : 'dn'}`;
-        card.style.left = x + 'px';
-        card.style.top = y + 'px';
-        
-        card.innerHTML = `
-            <div class="card-inner">
-                <div class="card-face card-front">${rank}${suit}</div>
-                <div class="card-face card-back"></div>
-            </div>`;
+function start(d) {
+    diff = d;
+    document.getElementById('menu').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    init();
+}
 
-        card.onpointerdown = startDrag;
-        board.appendChild(card);
-        return card;
+function init() {
+    let deck = [];
+    ['♠','♥','♦','♣'].forEach(s => ['A','2','3','4','5','6','7','8','9','10','J','Q','K'].forEach(r => deck.push({s, r, up: false})));
+    deck.sort(() => Math.random() - 0.5);
+    
+    tab = Array.from({length: 7}, (_, i) => deck.splice(0, i + 1));
+    tab.forEach(c => c[c.length-1].up = true);
+    stock = deck; waste = [];
+    render();
+}
+
+function render() {
+    const b = document.getElementById('board');
+    b.innerHTML = '';
+    cw = (b.clientWidth - (6 * gap)) / 7;
+    ch = cw * 1.4;
+
+    // Teken lege slots
+    for(let i=0; i<7; i++) {
+        let s = document.createElement('div');
+        s.className = 'slot'; s.style.width = cw+'px'; s.style.height = ch+'px';
+        s.style.left = (i*(cw+gap))+'px'; b.appendChild(s);
     }
 
-    function startDrag(e) {
-        if (this.classList.contains('dn')) return; // Dichte kaarten niet slepen
-        dragTarget = this;
-        dragTarget.classList.add('dragging');
-        
-        const rect = dragTarget.getBoundingClientRect();
-        offset.x = e.clientX - rect.left;
-        offset.y = e.clientY - rect.top;
-        
-        dragTarget.setPointerCapture(e.pointerId);
+    // Stock
+    if(stock.length > 0) {
+        let k = createK({up:false}, 6*(cw+gap), 0);
+        k.onclick = drawStock;
+        b.appendChild(k);
     }
 
-    window.onpointermove = (e) => {
-        if (!dragTarget) return;
-        // Volg de vinger/muis direct zonder vertraging
-        dragTarget.style.left = (e.clientX - offset.x) + 'px';
-        dragTarget.style.top = (e.clientY - offset.y) + 'px';
-    };
+    // Waste (deze krijgt de flip-animatie)
+    waste.forEach((card, i) => {
+        let k = createK(card, 5*(cw+gap), 0);
+        b.appendChild(k);
+    });
 
-    window.onpointerup = () => {
-        if (!dragTarget) return;
-        dragTarget.classList.remove('dragging');
-        dragTarget = null;
-    };
-
-    // De functie voor het rustige omdraaien
-    function safeFlip(cardEl) {
-        cardEl.offsetHeight; // Forceer de browser om de status te registreren
-        requestAnimationFrame(() => {
-            cardEl.classList.replace('dn', 'up');
+    // Tableau
+    tab.forEach((col, x) => {
+        col.forEach((card, y) => {
+            let k = createK(card, x*(cw+gap), ch + gap + (y*20));
+            b.appendChild(k);
         });
-    }
+    });
+}
 
-    // TEST: Een kaart maken en na 1 seconde omdraaien
-    const mijnKaart = createCard('Q', '♥', 100, 100, false);
+function createK(card, x, y) {
+    const el = document.createElement('div');
+    el.className = `card ${card.up ? 'up' : 'dn'}`;
+    el.style.width = cw+'px'; el.style.height = ch+'px';
+    el.style.left = x+'px'; el.style.top = y+'px';
+    
+    const isRed = card.s === '♥' || card.s === '♦';
+    el.innerHTML = `
+        <div class="card-inner">
+            <div class="card-face card-back"></div>
+            <div class="card-face card-front">
+                <div class="card-content ${isRed ? 'red' : 'black'}">
+                    <div class="rank">${card.r}<br>${card.s}</div>
+                    <div class="suit-center">${card.s}</div>
+                </div>
+            </div>
+        </div>
+    `;
+    return el;
+}
+
+function drawStock() {
+    if(stock.length === 0) return;
+
+    // Pak de bovenste kaart
+    let card = stock.pop();
+    
+    // 1. Maak een tijdelijke kaart op de positie van de stock (dicht)
+    const b = document.getElementById('board');
+    const tempK = createK({ ...card, up: false }, 6*(cw+gap), 0);
+    b.appendChild(tempK);
+
+    // 2. Forceer een kleine pauze zodat de browser de startpositie kent
     setTimeout(() => {
-        mijnKaart.style.left = '250px';
-        safeFlip(mijnKaart);
-    }, 1000);
+        // 3. Verplaats naar de waste en zet 'up' op true
+        tempK.style.left = 5*(cw+gap) + 'px';
+        tempK.classList.remove('dn');
+        tempK.classList.add('up');
+        
+        // 4. Nadat de animatie klaar is, de echte data bijwerken en renderen
+        setTimeout(() => {
+            card.up = true;
+            waste.push(card);
+            render();
+        }, 700); // Gelijk aan --anim-speed
+    }, 50);
+}
 </script>
 </body>
 </html>
