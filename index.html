@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Solitaire Neeltje Luxe Pro</title>
+<title>Solitaire Neeltje Pro - Motion</title>
 
 <style>
 :root {
@@ -11,6 +11,7 @@
     --accent: #f5c840;
     --red: #ff3b6b;
     --black: #2c3e50;
+    --card-speed: 0.5s;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
@@ -26,12 +27,12 @@ body, html {
     background: radial-gradient(circle at 50% 50%, #1a2d66 0%, #070b18 100%);
 }
 
-/* UI HEADER */
 #header {
     display: flex; justify-content: space-around; padding: 15px;
     background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px);
     border-bottom: 1px solid rgba(255,255,255,0.1);
 }
+
 .stat { text-align: center; }
 .stat b { font-size: 10px; color: var(--accent); display: block; text-transform: uppercase; }
 .stat span { font-size: 18px; font-weight: 800; }
@@ -41,32 +42,56 @@ body, html {
     flex: 1; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
     background: rgba(255,255,255,0.05); color: #fff; font-weight: bold; font-size: 12px;
 }
-.btn-gold { background: linear-gradient(135deg, #f5c840, #d4a017); color: #000; border: none; }
 
-/* HET BORD */
-#board { flex: 1; position: relative; margin: 10px; perspective: 1000px; }
+#board { flex: 1; position: relative; margin: 10px; perspective: 1200px; }
 
 .slot {
     position: absolute; border-radius: 10px;
-    border: 2px dashed rgba(255,255,255,0.05);
-    background: rgba(0,0,0,0.1);
+    border: 2px solid rgba(255,255,255,0.03);
+    background: rgba(0,0,0,0.15);
 }
 
+/* KAART BASIS */
 .card {
     position: absolute; border-radius: 10px;
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s;
+    transform-style: preserve-3d;
+    transition: transform var(--card-speed) cubic-bezier(0.25, 1, 0.5, 1), 
+                left var(--card-speed) cubic-bezier(0.25, 1, 0.5, 1), 
+                top var(--card-speed) cubic-bezier(0.25, 1, 0.5, 1);
     will-change: transform, left, top;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-    touch-action: none;
 }
 
-.card.up { background: #fff; border: 1px solid #ddd; color: #000; }
-.card.dn { 
-    background: linear-gradient(145deg, #1a3fbf, #0a1870); 
-    border: 2px solid #fff; 
+.card-inner {
+    position: relative; width: 100%; height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.4s ease-in-out;
 }
 
-.card-content { position: relative; width: 100%; height: 100%; padding: 6px; pointer-events: none; }
+/* FLIP LOGICA */
+.card.up .card-inner { transform: rotateY(0deg); }
+.card.dn .card-inner { transform: rotateY(180deg); }
+
+.card-face {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* VOORKANT */
+.card-front {
+    background: #fff; color: #000;
+    border: 1px solid #ddd;
+}
+
+/* ACHTERKANT */
+.card-back {
+    background: linear-gradient(145deg, #1a3fbf, #0a1870);
+    border: 2px solid #fff;
+    transform: rotateY(180deg);
+}
+
+.card-content { position: relative; width: 100%; height: 100%; padding: 6px; }
 .rank { font-size: 18px; font-weight: 900; line-height: 1; }
 .suit-mid { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 40px; opacity: 0.1; }
 
@@ -77,19 +102,24 @@ body, html {
 .dragging { 
     z-index: 1000 !important; 
     transition: none !important; 
-    transform: scale(1.1) rotate(2deg) !important;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.6) !important;
 }
+.dragging .card-inner { transform: scale(1.1) !important; }
 
 /* MENU */
 #menu {
     position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column;
     align-items: center; justify-content: center; background: var(--bg); gap: 20px;
 }
-.opt { 
-    width: 280px; padding: 25px; background: rgba(255,255,255,0.05); 
-    border-radius: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); 
+.opt { width: 280px; padding: 25px; background: rgba(255,255,255,0.05); border-radius: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+
+/* SHUFFLE ANIMATIE */
+@keyframes shuffle {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-20px) rotate(-5deg); }
+    50% { transform: translateX(20px) rotate(5deg); }
+    100% { transform: translateX(0); }
 }
+.shuffling { animation: shuffle 0.3s ease-in-out infinite; }
 </style>
 </head>
 <body>
@@ -108,7 +138,7 @@ body, html {
     </div>
     <div id="nav">
         <button class="btn" onclick="location.reload()">MENU</button>
-        <button class="btn btn-gold" onclick="init()">HERSTART</button>
+        <button class="btn" onclick="init()">SCHUDDEN</button>
     </div>
     <div id="board"></div>
 </div>
@@ -125,10 +155,18 @@ function start(d) {
     init();
 }
 
-function init() {
+async function init() {
+    // Reset data
     score = 0; moves = 0; secs = 0; clearInterval(timer);
     document.getElementById('score').textContent = '0';
     document.getElementById('moves').textContent = '0';
+    
+    const b = document.getElementById('board');
+    b.innerHTML = '<div id="deck-proxy" class="card dn shuffling" style="left: calc(50% - 40px); top: 40%;"></div>';
+    
+    // "Langer schudden" effect (1.5 seconde)
+    await new Promise(r => setTimeout(r, 1500));
+    
     timer = setInterval(() => { secs++; let m=Math.floor(secs/60), s=secs%60; document.getElementById('time').textContent=`${m}:${s<10?'0':''}${s}`; }, 1000);
     
     let deck = [];
@@ -138,7 +176,8 @@ function init() {
     tab = Array.from({length:7}, (_,i) => deck.splice(0, i+1));
     tab.forEach(col => col[col.length-1].up = true);
     stock = deck; waste = []; found = [[],[],[],[]];
-    render(true); // 'true' voor animatie effect bij start
+    
+    render(true);
 }
 
 function render(isDealing = false) {
@@ -151,21 +190,16 @@ function render(isDealing = false) {
     for(let i=0; i<7; i++){
         let s = document.createElement('div');
         s.className = 'slot'; s.style.width = cw+'px'; s.style.height = ch+'px';
-        s.style.left = (i*(cw+gap))+'px'; s.style.top = '0px';
-        b.appendChild(s);
+        s.style.left = (i*(cw+gap))+'px'; b.appendChild(s);
     }
 
-    // Stock & Waste
+    // Stock
     if(stock.length > 0) {
         let k = createK({up:false}, 6*(cw+gap), 0);
         k.onclick = drawStock; b.appendChild(k);
-    } else {
-        let r = document.createElement('div'); r.className = 'slot';
-        r.style.width = cw+'px'; r.style.height = ch+'px'; r.style.left = 6*(cw+gap)+'px';
-        r.onclick = () => { stock = waste.reverse().map(c=>({...c,up:false})); waste=[]; render(); };
-        b.appendChild(r);
     }
 
+    // Waste
     if(waste.length > 0) {
         let k = createK(waste[waste.length-1], 5*(cw+gap), 0);
         attachDrag(k, {type:'waste'}); b.appendChild(k);
@@ -176,12 +210,15 @@ function render(isDealing = false) {
         let yPos = ch + gap;
         col.forEach((card, y) => {
             let k = createK(card, x*(cw+gap), yPos);
-            if(isDealing) { // Boog-effect bij dealen
-                k.style.top = '-200px';
-                setTimeout(() => { k.style.top = yPos + 'px'; }, (x + y) * 50);
+            if(isDealing) {
+                k.style.left = '50%'; k.style.top = '40%';
+                setTimeout(() => { 
+                    k.style.left = (x*(cw+gap)) + 'px'; 
+                    k.style.top = (ch + gap + (card.up ? y*cw*0.35 : y*cw*0.15)) + 'px';
+                }, (x + y) * 60);
             }
             if(card.up) attachDrag(k, {type:'tab', x, y});
-            else if(y === col.length-1) k.onclick = () => { card.up=true; score+=5; render(); };
+            else if(y === col.length-1) k.onclick = () => { card.up=true; render(); };
             b.appendChild(k);
             yPos += card.up ? cw*0.35 : cw*0.15;
         });
@@ -201,11 +238,19 @@ function createK(card, x, y) {
     el.className = `card ${card.up ? 'up' : 'dn'}`;
     el.style.width = cw+'px'; el.style.height = ch+'px';
     el.style.left = x+'px'; el.style.top = y+'px';
-    el.style.transform = `rotateZ(${card.rz}deg)`;
-    if(card.up) {
-        const red = card.s==='♥'||card.s==='♦';
-        el.innerHTML = `<div class="card-content ${red?'red':'black'}"><div class="rank">${card.r}<br>${card.s}</div><div class="suit-mid">${card.s}</div></div>`;
-    }
+    
+    const red = card.s==='♥'||card.s==='♦';
+    el.innerHTML = `
+        <div class="card-inner">
+            <div class="card-face card-front">
+                <div class="card-content ${red?'red':'black'}">
+                    <div class="rank">${card.r}<br>${card.s}</div>
+                    <div class="suit-mid">${card.s}</div>
+                </div>
+            </div>
+            <div class="card-face card-back"></div>
+        </div>
+    `;
     return el;
 }
 
@@ -218,45 +263,28 @@ function drawStock() {
 function attachDrag(el, info) {
     el.onpointerdown = (e) => {
         if(e.button !== 0 && e.pointerType !== 'touch') return;
-        
-        dragInfo = { 
-            el, info, startX: e.clientX, startY: e.clientY,
-            origX: parseFloat(el.style.left), origY: parseFloat(el.style.top),
-            cards: []
-        };
-
+        dragInfo = { el, info, startX: e.clientX, startY: e.clientY, origX: parseFloat(el.style.left), origY: parseFloat(el.style.top), cards: [] };
         if(info.type === 'tab') {
             dragInfo.cards = Array.from(document.querySelectorAll('.card')).filter(c => 
                 Math.abs(parseFloat(c.style.left) - dragInfo.origX) < 1 && parseFloat(c.style.top) >= dragInfo.origY
             );
         } else { dragInfo.cards = [el]; }
-
-        dragInfo.cards.forEach(c => {
-            c.classList.add('dragging');
-            c.dataset.ox = parseFloat(c.style.left);
-            c.dataset.oy = parseFloat(c.style.top);
-        });
+        dragInfo.cards.forEach(c => { c.classList.add('dragging'); c.dataset.ox = parseFloat(c.style.left); c.dataset.oy = parseFloat(c.style.top); });
         el.setPointerCapture(e.pointerId);
     };
 
     el.onpointermove = (e) => {
         if(!dragInfo) return;
         let dx = e.clientX - dragInfo.startX, dy = e.clientY - dragInfo.startY;
-        dragInfo.cards.forEach(c => {
-            c.style.left = (parseFloat(c.dataset.ox) + dx) + 'px';
-            c.style.top = (parseFloat(c.dataset.oy) + dy) + 'px';
-        });
+        dragInfo.cards.forEach(c => { c.style.left = (parseFloat(c.dataset.ox) + dx) + 'px'; c.style.top = (parseFloat(c.dataset.oy) + dy) + 'px'; });
     };
 
     el.onpointerup = (e) => {
         if(!dragInfo) return;
-        let dx = Math.abs(e.clientX - dragInfo.startX);
-        let dy = Math.abs(e.clientY - dragInfo.startY);
-
-        if(dx < 10 && dy < 10) { // Snelklik naar foundation
+        let dx = Math.abs(e.clientX - dragInfo.startX), dy = Math.abs(e.clientY - dragInfo.startY);
+        if(dx < 10 && dy < 10) {
             for(let i=0; i<4; i++) if(isValidFoundation(dragInfo.info, i)) { executeFoundation(dragInfo.info, i); dragInfo=null; render(); return; }
         }
-
         const target = document.elementFromPoint(e.clientX, e.clientY);
         const slot = target ? target.closest('.slot, .card') : null;
         if(slot) {
