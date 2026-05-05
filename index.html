@@ -1,8 +1,92 @@
-// ===============================
-// SOLITAIRE SHUFFLE ENGINE (AAA READY LITE)
-// ===============================
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solitaire Engine Demo</title>
 
-// -------- RNG (seeded) --------
+<style>
+body {
+    margin: 0;
+    font-family: -apple-system, system-ui;
+    background: #0b5d3b;
+    color: white;
+}
+
+header {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background: #084c31;
+    align-items: center;
+}
+
+button, select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+}
+
+#game {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    overflow-x: auto;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+}
+
+.card {
+    width: 70px;
+    height: 100px;
+    border-radius: 8px;
+    background: white;
+    color: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.card.red {
+    color: red;
+}
+
+.card.back {
+    background: linear-gradient(45deg, #1e3a8a, #2563eb);
+    color: transparent;
+}
+
+.stack {
+    margin-top: -70px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <button onclick="newGame()">New Game</button>
+
+    <select id="difficulty">
+        <option value="easy">Easy</option>
+        <option value="medium" selected>Medium</option>
+        <option value="hard">Hard</option>
+    </select>
+
+    <span id="seedLabel"></span>
+</header>
+
+<div id="game"></div>
+
+<script>
+
+// ===== RNG =====
 function createSeededRNG(seed) {
     return function () {
         seed |= 0;
@@ -13,13 +97,12 @@ function createSeededRNG(seed) {
     };
 }
 
-// -------- Deck generator --------
+// ===== Deck =====
 function createDeck() {
-    const suits = ['♠', '♥', '♦', '♣'];
+    const suits = ['♠','♥','♦','♣'];
     const values = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 
     const deck = [];
-
     for (const suit of suits) {
         for (let i = 0; i < values.length; i++) {
             deck.push({
@@ -30,24 +113,21 @@ function createDeck() {
             });
         }
     }
-
     return deck;
 }
 
-// -------- Fisher-Yates shuffle --------
+// ===== Shuffle =====
 function shuffle(deck, rng) {
     const result = deck.slice();
-
     for (let i = result.length - 1; i > 0; i--) {
         const j = (rng() * (i + 1)) | 0;
         [result[i], result[j]] = [result[j], result[i]];
     }
-
     return result;
 }
 
-// -------- Klondike deal --------
-function dealKlondike(deck) {
+// ===== Deal (Klondike) =====
+function deal(deck) {
     const tableau = [];
     let index = 0;
 
@@ -56,7 +136,6 @@ function dealKlondike(deck) {
 
         for (let row = 0; row <= col; row++) {
             const card = { ...deck[index++] };
-
             card.faceUp = (row === col);
             pile.push(card);
         }
@@ -64,114 +143,92 @@ function dealKlondike(deck) {
         tableau.push(pile);
     }
 
-    const stock = deck.slice(index);
-
-    return {
-        tableau,
-        stock,
-        waste: [],
-        foundations: [[], [], [], []]
-    };
+    return { tableau };
 }
 
-// -------- Heuristic "winnable" check --------
-// (snelle check – geen zware solver)
-function isLikelyWinnable(state, difficulty = "medium") {
+// ===== Heuristic =====
+function isPlayable(state, difficulty) {
     let score = 0;
 
-    // Check hoeveel Azen direct speelbaar zijn
-    const topCards = state.tableau.map(p => p[p.length - 1]);
+    const tops = state.tableau.map(p => p[p.length - 1]);
 
-    const acesVisible = topCards.filter(c => c.value === 'A').length;
-    score += acesVisible * 2;
+    score += tops.filter(c => c.value === 'A').length * 2;
 
-    // Check kleur-afwisseling mogelijkheden
-    let moves = 0;
-    for (let i = 0; i < topCards.length; i++) {
-        for (let j = 0; j < topCards.length; j++) {
+    for (let i = 0; i < tops.length; i++) {
+        for (let j = 0; j < tops.length; j++) {
             if (i === j) continue;
 
-            const a = topCards[i];
-            const b = topCards[j];
+            const a = tops[i];
+            const b = tops[j];
 
             if (a && b && a.color !== b.color && a.rank === b.rank - 1) {
-                moves++;
+                score++;
             }
         }
     }
 
-    score += moves;
-
-    // Difficulty scaling
     if (difficulty === "easy") return score >= 3;
     if (difficulty === "hard") return score >= 1;
-
-    return score >= 2; // medium
+    return score >= 2;
 }
 
-// -------- Main generator --------
-function generateSolitaireGame(options = {}) {
-    const {
-        seed = Date.now(),
-        difficulty = "medium",
-        maxAttempts = 500
-    } = options;
-
+// ===== Generator =====
+function generate(seed, difficulty) {
     const rng = createSeededRNG(seed);
 
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        const deck = createDeck();
-        const shuffled = shuffle(deck, rng);
-        const state = dealKlondike(shuffled);
+    for (let i = 0; i < 200; i++) {
+        const deck = shuffle(createDeck(), rng);
+        const state = deal(deck);
 
-        if (isLikelyWinnable(state, difficulty)) {
-            return {
-                seed,
-                state,
-                attempts: attempt + 1
-            };
+        if (isPlayable(state, difficulty)) {
+            return state;
         }
     }
 
-    // fallback (altijd iets teruggeven)
-    const deck = createDeck();
-    const shuffled = shuffle(deck, rng);
-
-    return {
-        seed,
-        state: dealKlondike(shuffled),
-        attempts: maxAttempts,
-        fallback: true
-    };
+    return deal(shuffle(createDeck(), rng));
 }
 
-// -------- Debug helper --------
-function printGame(state) {
-    console.log("=== TABLEAU ===");
-    state.tableau.forEach((pile, i) => {
-        console.log(
-            `Col ${i + 1}:`,
-            pile.map(c => c.faceUp ? `${c.value}${c.suit}` : "XX").join(" ")
-        );
+// ===== Render =====
+function render(state) {
+    const game = document.getElementById("game");
+    game.innerHTML = "";
+
+    state.tableau.forEach(col => {
+        const colDiv = document.createElement("div");
+        colDiv.className = "column";
+
+        col.forEach((card, i) => {
+            const c = document.createElement("div");
+
+            c.className = "card " + (card.faceUp ? card.color : "back");
+
+            if (i > 0) c.classList.add("stack");
+
+            c.textContent = card.faceUp ? card.value + card.suit : "";
+
+            colDiv.appendChild(c);
+        });
+
+        game.appendChild(colDiv);
     });
-
-    console.log("Stock:", state.stock.length);
 }
 
-// ===============================
-// TEST RUN
-// ===============================
+// ===== New Game =====
+function newGame() {
+    const seed = Math.floor(Math.random() * 1000000);
+    const difficulty = document.getElementById("difficulty").value;
 
-const game = generateSolitaireGame({
-    seed: 12345,        // zelf aanpassen → zelfde game
-    difficulty: "medium"
-});
+    const state = generate(seed, difficulty);
 
-console.log("Seed:", game.seed);
-console.log("Attempts:", game.attempts);
-printGame(game.state);
+    document.getElementById("seedLabel").textContent = "Seed: " + seed;
 
-// ===============================
-// EXPORT (voor modules / app)
-// ===============================
-// export { generateSolitaireGame };
+    render(state);
+}
+
+// ===== Init =====
+newGame();
+
+</script>
+
+</body>
+</html>
