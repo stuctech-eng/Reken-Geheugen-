@@ -1,99 +1,144 @@
-<style>
-    :root {
-        --anim-speed: 0.6s;
-        --bezier: cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Solitaire - De Werkende Basis</title>
+    <style>
+        :root {
+            --card-w: 90px;
+            --card-h: 130px;
+            --anim-speed: 0.7s; /* De snelheid van het rustige omdraaien */
+        }
 
-    /* Het speelveld */
-    #board {
-        position: relative;
-        width: 100%; height: 100vh;
-        perspective: 1500px;
-        touch-action: none; /* Cruciaal voor slepen op mobiel */
-    }
+        body { 
+            background: #0a2e1a; 
+            margin: 0; 
+            overflow: hidden; 
+            touch-action: none; 
+            font-family: sans-serif;
+        }
 
-    /* De Kaart */
-    .card {
-        position: absolute;
-        width: 90px; height: 130px;
-        transition: left var(--anim-speed) var(--bezier), top var(--anim-speed) var(--bezier);
-        z-index: 10;
-        cursor: grab;
-    }
+        #board {
+            position: relative;
+            width: 100vw; height: 100vh;
+            perspective: 1200px; /* Cruciaal voor het omdraai-effect */
+        }
 
-    .card.dragging {
-        transition: none !important; /* Geen vertraging tijdens het slepen zelf */
-        z-index: 1000 !important;
-        transform: scale(1.05); /* Licht optillen tijdens slepen */
-    }
+        /* DE KAART */
+        .card {
+            position: absolute;
+            width: var(--card-w); height: var(--card-h);
+            /* Transitie alleen voor automatisch verplaatsen */
+            transition: left var(--anim-speed) ease, top var(--anim-speed) ease;
+            z-index: 10;
+            cursor: grab;
+        }
 
-    .card-inner {
-        position: relative;
-        width: 100%; height: 100%;
-        transform-style: preserve-3d;
-        transition: transform var(--anim-speed) var(--bezier);
-    }
+        /* TIJDENS SLEPEN: Geen transitie, kaart moet direct volgen */
+        .card.dragging {
+            transition: none !important;
+            z-index: 1000 !important;
+            transform: scale(1.05);
+        }
 
-    /* Flip States */
-    .card.dn .card-inner { transform: rotateY(180deg); }
-    .card.up .card-inner { transform: rotateY(0deg); }
+        .card-inner {
+            position: relative;
+            width: 100%; height: 100%;
+            transform-style: preserve-3d;
+            transition: transform var(--anim-speed) cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-    .card-face {
-        position: absolute; inset: 0;
-        backface-visibility: hidden;
-        border-radius: 10px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    }
+        /* States voor draaien */
+        .card.dn .card-inner { transform: rotateY(180deg); }
+        .card.up .card-inner { transform: rotateY(0deg); }
 
-    .card-front { background: white; color: black; }
-    .card-back { 
-        background: linear-gradient(135deg, #1e40af, #1e3a8a); 
-        border: 2px solid #fff; 
-        transform: rotateY(180deg); 
-    }
-</style>
+        .card-face {
+            position: absolute; inset: 0;
+            backface-visibility: hidden;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border: 1px solid #ddd;
+        }
+
+        .card-front { 
+            background: white; color: black; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 20px; font-weight: bold; 
+        }
+
+        .card-back { 
+            background: linear-gradient(135deg, #1e40af, #1e3a8a); 
+            border: 3px solid white; 
+            transform: rotateY(180deg); 
+        }
+    </style>
+</head>
+<body>
+
+<div id="board"></div>
 
 <script>
-    // SLEEP LOGICA (DRAG & DROP)
+    const board = document.getElementById('board');
     let dragTarget = null;
     let offset = { x: 0, y: 0 };
 
-    function makeDraggable(el) {
-        el.onpointerdown = (e) => {
-            // Alleen open kaarten slepen
-            if (el.classList.contains('dn')) return;
+    function createCard(rank, suit, x, y, isUp = false) {
+        const card = document.createElement('div');
+        card.className = `card ${isUp ? 'up' : 'dn'}`;
+        card.style.left = x + 'px';
+        card.style.top = y + 'px';
+        
+        card.innerHTML = `
+            <div class="card-inner">
+                <div class="card-face card-front">${rank}${suit}</div>
+                <div class="card-face card-back"></div>
+            </div>`;
 
-            dragTarget = el;
-            el.classList.add('dragging');
-            
-            // Bereken waar de vinger de kaart raakt
-            const rect = el.getBoundingClientRect();
-            offset.x = e.clientX - rect.left;
-            offset.y = e.clientY - rect.top;
-
-            el.setPointerCapture(e.pointerId);
-        };
-
-        el.onpointermove = (e) => {
-            if (!dragTarget) return;
-            // Volg de vinger/muis direct
-            dragTarget.style.left = (e.clientX - offset.x) + 'px';
-            dragTarget.style.top = (e.clientY - offset.y) + 'px';
-        };
-
-        el.onpointerup = (e) => {
-            if (!dragTarget) return;
-            dragTarget.classList.remove('dragging');
-            // Hier komt de logica om te checken of de kaart op een stapel ligt
-            dragTarget = null;
-        };
+        card.onpointerdown = startDrag;
+        board.appendChild(card);
+        return card;
     }
 
-    // ANIMATIE LOGICA (VOOR HET OMDRAAIEN)
-    function flipCard(cardEl) {
-        cardEl.offsetHeight; // Forceer browser-check
+    function startDrag(e) {
+        if (this.classList.contains('dn')) return; // Dichte kaarten niet slepen
+        dragTarget = this;
+        dragTarget.classList.add('dragging');
+        
+        const rect = dragTarget.getBoundingClientRect();
+        offset.x = e.clientX - rect.left;
+        offset.y = e.clientY - rect.top;
+        
+        dragTarget.setPointerCapture(e.pointerId);
+    }
+
+    window.onpointermove = (e) => {
+        if (!dragTarget) return;
+        // Volg de vinger/muis direct zonder vertraging
+        dragTarget.style.left = (e.clientX - offset.x) + 'px';
+        dragTarget.style.top = (e.clientY - offset.y) + 'px';
+    };
+
+    window.onpointerup = () => {
+        if (!dragTarget) return;
+        dragTarget.classList.remove('dragging');
+        dragTarget = null;
+    };
+
+    // De functie voor het rustige omdraaien
+    function safeFlip(cardEl) {
+        cardEl.offsetHeight; // Forceer de browser om de status te registreren
         requestAnimationFrame(() => {
             cardEl.classList.replace('dn', 'up');
         });
     }
+
+    // TEST: Een kaart maken en na 1 seconde omdraaien
+    const mijnKaart = createCard('Q', '♥', 100, 100, false);
+    setTimeout(() => {
+        mijnKaart.style.left = '250px';
+        safeFlip(mijnKaart);
+    }, 1000);
 </script>
+</body>
+</html>
