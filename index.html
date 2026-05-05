@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Solitaire Neeltje - Smooth Flip</title>
+<title>Solitaire Neeltje - Smooth Flip & Drag</title>
 
 <style>
 :root {
@@ -11,7 +11,7 @@
     --accent: #f5c840;
     --red: #ff3b6b;
     --black: #2c3e50;
-    --anim-speed: 0.7s; /* Iets trager voor een rustig effect */
+    --anim-speed: 0.7s;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -20,6 +20,7 @@ body {
     width: 100%; height: 100vh;
     font-family: -apple-system, sans-serif;
     background: var(--bg); overflow: hidden;
+    touch-action: none; /* Cruciaal voor slepen */
 }
 
 #app { display: none; height: 100%; flex-direction: column; background: radial-gradient(circle, #1a2d66, #070b18); }
@@ -32,13 +33,20 @@ body {
 
 .slot { position: absolute; border-radius: 10px; border: 2px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2); }
 
-/* DE KAART STRUCTUUR */
 .card {
     position: absolute;
     border-radius: 10px;
     transform-style: preserve-3d;
     transition: left var(--anim-speed) ease-in-out, top var(--anim-speed) ease-in-out;
     z-index: 10;
+    cursor: grab;
+}
+
+/* FIX: Geen vertraging tijdens het slepen */
+.card.dragging {
+    transition: none !important;
+    z-index: 1000 !important;
+    transform: scale(1.05);
 }
 
 .card-inner {
@@ -48,7 +56,6 @@ body {
     transition: transform var(--anim-speed) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* FLIP EFFECT */
 .card.dn .card-inner { transform: rotateY(180deg); }
 .card.up .card-inner { transform: rotateY(0deg); }
 
@@ -73,9 +80,8 @@ body {
 .red { color: var(--red); }
 .black { color: var(--black); }
 
-/* MENU */
 #menu { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); gap: 20px; }
-.btn-start { padding: 20px 40px; background: rgba(255,255,255,0.1); border: 1px solid var(--accent); border-radius: 15px; color: #fff; text-align: center; width: 250px; }
+.btn-start { padding: 20px 40px; background: rgba(255,255,255,0.1); border: 1px solid var(--accent); border-radius: 15px; color: #fff; text-align: center; width: 250px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -95,11 +101,11 @@ body {
 </div>
 
 <script>
-let stock = [], waste = [], tab = [[],[],[],[],[],[],[]], found = [[],[],[],[]];
-let cw, ch, gap = 8, diff = 1;
+let stock = [], waste = [], tab = [[],[],[],[],[],[],[]];
+let cw, ch, gap = 8;
+let dragTarget = null, offset = { x: 0, y: 0 };
 
 function start(d) {
-    diff = d;
     document.getElementById('menu').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
     init();
@@ -122,7 +128,7 @@ function render() {
     cw = (b.clientWidth - (6 * gap)) / 7;
     ch = cw * 1.4;
 
-    // Teken lege slots
+    // Slots
     for(let i=0; i<7; i++) {
         let s = document.createElement('div');
         s.className = 'slot'; s.style.width = cw+'px'; s.style.height = ch+'px';
@@ -136,9 +142,10 @@ function render() {
         b.appendChild(k);
     }
 
-    // Waste (deze krijgt de flip-animatie)
+    // Waste
     waste.forEach((card, i) => {
         let k = createK(card, 5*(cw+gap), 0);
+        if(i === waste.length - 1) k.onpointerdown = startDrag;
         b.appendChild(k);
     });
 
@@ -146,6 +153,7 @@ function render() {
     tab.forEach((col, x) => {
         col.forEach((card, y) => {
             let k = createK(card, x*(cw+gap), ch + gap + (y*20));
+            if(card.up) k.onpointerdown = startDrag;
             b.appendChild(k);
         });
     });
@@ -172,30 +180,45 @@ function createK(card, x, y) {
     return el;
 }
 
+// SLEEP LOGICA
+function startDrag(e) {
+    dragTarget = e.currentTarget;
+    dragTarget.classList.add('dragging');
+    const rect = dragTarget.getBoundingClientRect();
+    offset.x = e.clientX - rect.left;
+    offset.y = e.clientY - rect.top;
+    dragTarget.setPointerCapture(e.pointerId);
+}
+
+window.onpointermove = (e) => {
+    if (!dragTarget) return;
+    dragTarget.style.left = (e.clientX - offset.x) + 'px';
+    dragTarget.style.top = (e.clientY - offset.y) + 'px';
+};
+
+window.onpointerup = () => {
+    if (!dragTarget) return;
+    dragTarget.classList.remove('dragging');
+    dragTarget = null;
+    render(); // Springt terug naar positie omdat we nog geen 'drop' logica hebben
+};
+
 function drawStock() {
     if(stock.length === 0) return;
-
-    // Pak de bovenste kaart
     let card = stock.pop();
-    
-    // 1. Maak een tijdelijke kaart op de positie van de stock (dicht)
     const b = document.getElementById('board');
     const tempK = createK({ ...card, up: false }, 6*(cw+gap), 0);
     b.appendChild(tempK);
 
-    // 2. Forceer een kleine pauze zodat de browser de startpositie kent
     setTimeout(() => {
-        // 3. Verplaats naar de waste en zet 'up' op true
         tempK.style.left = 5*(cw+gap) + 'px';
         tempK.classList.remove('dn');
         tempK.classList.add('up');
-        
-        // 4. Nadat de animatie klaar is, de echte data bijwerken en renderen
         setTimeout(() => {
             card.up = true;
             waste.push(card);
             render();
-        }, 700); // Gelijk aan --anim-speed
+        }, 700);
     }, 50);
 }
 </script>
