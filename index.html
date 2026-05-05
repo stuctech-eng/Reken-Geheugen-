@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Solitaire Neeltje Pro - Flip Fix</title>
+<title>Solitaire Neeltje - Smooth Flip</title>
 
 <style>
 :root {
@@ -11,128 +11,92 @@
     --accent: #f5c840;
     --red: #ff3b6b;
     --black: #2c3e50;
+    --anim-speed: 0.7s; /* Iets trager voor een rustig effect */
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-body, html {
-    width: 100%; height: 100%;
-    font-family: -apple-system, system-ui, sans-serif;
-    background: var(--bg); overflow: hidden; color: #fff;
+body {
+    width: 100%; height: 100vh;
+    font-family: -apple-system, sans-serif;
+    background: var(--bg); overflow: hidden;
 }
 
-#app {
-    display: none; height: 100vh; flex-direction: column;
-    background: radial-gradient(circle at 50% 50%, #1a2d66 0%, #070b18 100%);
-}
+#app { display: none; height: 100%; flex-direction: column; background: radial-gradient(circle, #1a2d66, #070b18); }
 
-#header {
-    display: flex; justify-content: space-around; padding: 15px;
-    background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.stat { text-align: center; }
+#header { display: flex; justify-content: space-around; padding: 15px; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.1); }
 .stat b { font-size: 10px; color: var(--accent); display: block; text-transform: uppercase; }
-.stat span { font-size: 18px; font-weight: 800; }
+.stat span { font-size: 18px; font-weight: 800; color: #fff; }
 
-#nav { display: flex; gap: 10px; padding: 10px; background: rgba(0,0,0,0.2); }
-.btn {
-    flex: 1; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.05); color: #fff; font-weight: bold; font-size: 12px;
-}
+#board { flex: 1; position: relative; margin: 10px; perspective: 1500px; }
 
-#board { flex: 1; position: relative; margin: 10px; perspective: 1200px; }
+.slot { position: absolute; border-radius: 10px; border: 2px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2); }
 
-.slot {
-    position: absolute; border-radius: 10px;
-    border: 2px solid rgba(255,255,255,0.03);
-    background: rgba(0,0,0,0.15);
-}
-
+/* DE KAART STRUCTUUR */
 .card {
-    position: absolute; border-radius: 10px;
+    position: absolute;
+    border-radius: 10px;
     transform-style: preserve-3d;
-    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), 
-                left 0.6s cubic-bezier(0.23, 1, 0.32, 1), 
-                top 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-    will-change: transform, left, top;
+    transition: left var(--anim-speed) ease-in-out, top var(--anim-speed) ease-in-out;
+    z-index: 10;
 }
 
 .card-inner {
-    position: relative; width: 100%; height: 100%;
+    position: relative;
+    width: 100%; height: 100%;
     transform-style: preserve-3d;
-    transition: transform 0.6s ease-in-out;
+    transition: transform var(--anim-speed) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* De draai-animatie */
-.card.up .card-inner { transform: rotateY(0deg); }
+/* FLIP EFFECT */
 .card.dn .card-inner { transform: rotateY(180deg); }
+.card.up .card-inner { transform: rotateY(0deg); }
 
 .card-face {
     position: absolute; inset: 0;
     backface-visibility: hidden;
     border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
 }
 
-.card-front { background: #fff; color: #000; border: 1px solid #ddd; }
-.card-back {
-    background: linear-gradient(145deg, #1a3fbf, #0a1870);
-    border: 2px solid #fff;
-    transform: rotateY(180deg);
+.card-front { background: #fff; color: #000; }
+.card-back { 
+    background: linear-gradient(135deg, #1e40af, #1e3a8a); 
+    border: 2px solid #fff; 
+    transform: rotateY(180deg); 
 }
 
-.card-content { position: relative; width: 100%; height: 100%; padding: 6px; }
-.rank { font-size: 18px; font-weight: 900; line-height: 1; }
-.suit-mid { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 40px; opacity: 0.1; }
+.card-content { padding: 8px; height: 100%; display: flex; flex-direction: column; }
+.rank { font-size: 1.2rem; font-weight: bold; line-height: 1; }
+.suit-center { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; opacity: 0.15; }
 
 .red { color: var(--red); }
 .black { color: var(--black); }
 
-.dragging { z-index: 1000 !important; transition: none !important; }
-.dragging .card-inner { transform: scale(1.1) !important; transition: none !important; }
-
-#menu {
-    position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; background: var(--bg); gap: 20px;
-}
-.opt { width: 280px; padding: 25px; background: rgba(255,255,255,0.05); border-radius: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
-
-@keyframes shuffle-anim {
-    0% { transform: translate(0,0); }
-    25% { transform: translate(-20px, 10px) rotate(-5deg); }
-    50% { transform: translate(20px, -10px) rotate(5deg); }
-    100% { transform: translate(0,0); }
-}
-.shuffling { animation: shuffle-anim 0.3s infinite; }
+/* MENU */
+#menu { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); gap: 20px; }
+.btn-start { padding: 20px 40px; background: rgba(255,255,255,0.1); border: 1px solid var(--accent); border-radius: 15px; color: #fff; text-align: center; width: 250px; }
 </style>
 </head>
 <body>
 
 <div id="menu">
-    <h1 style="letter-spacing: 5px; color: var(--accent);">SOLITAIRE</h1>
-    <div class="opt" onclick="start(1)"><h2>MAKKELIJK</h2><p>1 kaart trekken</p></div>
-    <div class="opt" onclick="start(3)"><h2>MOEILIJK</h2><p>3 kaarten trekken</p></div>
+    <h1 style="color:var(--accent)">SOLITAIRE</h1>
+    <div class="btn-start" onclick="start(1)">MAKKELIJK</div>
+    <div class="btn-start" onclick="start(3)">MOEILIJK</div>
 </div>
 
 <div id="app">
     <div id="header">
         <div class="stat"><b>Tijd</b><span id="time">0:00</span></div>
         <div class="stat"><b>Score</b><span id="score">0</span></div>
-        <div class="stat"><b>Zetten</b><span id="moves">0</span></div>
-    </div>
-    <div id="nav">
-        <button class="btn" onclick="location.reload()">MENU</button>
-        <button class="btn" onclick="init()">HERSTART</button>
     </div>
     <div id="board"></div>
 </div>
 
 <script>
-const S = ['♠', '♥', '♦', '♣'], R = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-let stock = [], waste = [], found = [[],[],[],[]], tab = [[],[],[],[],[],[],[]];
-let diff = 1, score = 0, moves = 0, secs = 0, timer = null, cw, ch, gap = 8, dragInfo = null;
+let stock = [], waste = [], tab = [[],[],[],[],[],[],[]], found = [[],[],[],[]];
+let cw, ch, gap = 8, diff = 1;
 
 function start(d) {
     diff = d;
@@ -141,72 +105,49 @@ function start(d) {
     init();
 }
 
-async function init() {
-    score = 0; moves = 0; secs = 0; clearInterval(timer);
-    const b = document.getElementById('board');
-    b.innerHTML = '<div class="card dn shuffling" style="left:40%; top:30%; width:80px; height:120px;"><div class="card-inner"><div class="card-face card-back"></div></div></div>';
-    await new Promise(r => setTimeout(r, 1000));
-    timer = setInterval(() => { secs++; let m=Math.floor(secs/60), s=secs%60; document.getElementById('time').textContent=`${m}:${s<10?'0':''}${s}`; }, 1000);
-    
+function init() {
     let deck = [];
-    S.forEach(s => R.forEach(r => deck.push({s, r, up: false})));
+    ['♠','♥','♦','♣'].forEach(s => ['A','2','3','4','5','6','7','8','9','10','J','Q','K'].forEach(r => deck.push({s, r, up: false})));
     deck.sort(() => Math.random() - 0.5);
-    tab = Array.from({length:7}, (_,i) => deck.splice(0, i+1));
-    tab.forEach(col => col[col.length-1].up = true);
-    stock = deck; waste = []; found = [[],[],[],[]];
-    render(true);
+    
+    tab = Array.from({length: 7}, (_, i) => deck.splice(0, i + 1));
+    tab.forEach(c => c[c.length-1].up = true);
+    stock = deck; waste = [];
+    render();
 }
 
-function render(isDealing = false) {
+function render() {
     const b = document.getElementById('board');
     b.innerHTML = '';
     cw = (b.clientWidth - (6 * gap)) / 7;
-    ch = cw * 1.45;
+    ch = cw * 1.4;
 
-    for(let i=0; i<7; i++){
+    // Teken lege slots
+    for(let i=0; i<7; i++) {
         let s = document.createElement('div');
         s.className = 'slot'; s.style.width = cw+'px'; s.style.height = ch+'px';
         s.style.left = (i*(cw+gap))+'px'; b.appendChild(s);
     }
 
+    // Stock
     if(stock.length > 0) {
         let k = createK({up:false}, 6*(cw+gap), 0);
-        k.onclick = drawStock; b.appendChild(k);
-    } else {
-        let r = document.createElement('div'); r.className = 'slot';
-        r.style.width = cw+'px'; r.style.height = ch+'px'; r.style.left = 6*(cw+gap)+'px';
-        r.onclick = resetStock; b.appendChild(r);
+        k.onclick = drawStock;
+        b.appendChild(k);
     }
 
+    // Waste (deze krijgt de flip-animatie)
     waste.forEach((card, i) => {
         let k = createK(card, 5*(cw+gap), 0);
-        if(i === waste.length-1) attachDrag(k, {type:'waste'});
         b.appendChild(k);
     });
 
+    // Tableau
     tab.forEach((col, x) => {
-        let yPos = ch + gap;
         col.forEach((card, y) => {
-            let k = createK(card, x*(cw+gap), yPos);
-            if(isDealing) {
-                k.style.left = '40%'; k.style.top = '30%';
-                setTimeout(() => { 
-                    k.style.left = (x*(cw+gap)) + 'px'; 
-                    k.style.top = (ch + gap + (card.up ? y*cw*0.35 : y*cw*0.15)) + 'px';
-                }, (x + y) * 50);
-            }
-            if(card.up) attachDrag(k, {type:'tab', x, y});
-            else if(y === col.length-1) k.onclick = () => { card.up=true; render(); };
+            let k = createK(card, x*(cw+gap), ch + gap + (y*20));
             b.appendChild(k);
-            yPos += card.up ? cw*0.35 : cw*0.15;
         });
-    });
-
-    found.forEach((f, i) => {
-        if(f.length > 0) {
-            let k = createK(f[f.length-1], i*(cw+gap), 0);
-            attachDrag(k, {type:'found', i}); b.appendChild(k);
-        }
     });
 }
 
@@ -215,128 +156,48 @@ function createK(card, x, y) {
     el.className = `card ${card.up ? 'up' : 'dn'}`;
     el.style.width = cw+'px'; el.style.height = ch+'px';
     el.style.left = x+'px'; el.style.top = y+'px';
-    const red = card.s==='♥'||card.s==='♦';
+    
+    const isRed = card.s === '♥' || card.s === '♦';
     el.innerHTML = `
         <div class="card-inner">
+            <div class="card-face card-back"></div>
             <div class="card-face card-front">
-                <div class="card-content ${red?'red':'black'}">
+                <div class="card-content ${isRed ? 'red' : 'black'}">
                     <div class="rank">${card.r}<br>${card.s}</div>
-                    <div class="suit-mid">${card.s}</div>
+                    <div class="suit-center">${card.s}</div>
                 </div>
             </div>
-            <div class="card-face card-back"></div>
-        </div>`;
+        </div>
+    `;
     return el;
 }
 
 function drawStock() {
     if(stock.length === 0) return;
-    let n = diff === 3 ? Math.min(3, stock.length) : 1;
+
+    // Pak de bovenste kaart
+    let card = stock.pop();
     
-    // We renderen de kaart eerst op de stock-positie (dicht)
-    render(); 
-    
-    // Na een korte adempauze verplaatsen en flippen we hem
-    requestAnimationFrame(() => {
+    // 1. Maak een tijdelijke kaart op de positie van de stock (dicht)
+    const b = document.getElementById('board');
+    const tempK = createK({ ...card, up: false }, 6*(cw+gap), 0);
+    b.appendChild(tempK);
+
+    // 2. Forceer een kleine pauze zodat de browser de startpositie kent
+    setTimeout(() => {
+        // 3. Verplaats naar de waste en zet 'up' op true
+        tempK.style.left = 5*(cw+gap) + 'px';
+        tempK.classList.remove('dn');
+        tempK.classList.add('up');
+        
+        // 4. Nadat de animatie klaar is, de echte data bijwerken en renderen
         setTimeout(() => {
-            for(let i=0; i<n; i++) {
-                if(stock.length > 0) {
-                    let card = stock.pop();
-                    card.up = true;
-                    waste.push(card);
-                }
-            }
-            moves++; render();
-        }, 50);
-    });
+            card.up = true;
+            waste.push(card);
+            render();
+        }, 700); // Gelijk aan --anim-speed
+    }, 50);
 }
-
-function resetStock() {
-    stock = waste.reverse().map(c => ({...c, up:false}));
-    waste = []; moves++; render();
-}
-
-function attachDrag(el, info) {
-    el.onpointerdown = (e) => {
-        if(e.pointerType === 'mouse' && e.button !== 0) return;
-        dragInfo = { el, info, startX: e.clientX, startY: e.clientY, origX: parseFloat(el.style.left), origY: parseFloat(el.style.top), cards: [] };
-        if(info.type === 'tab') {
-            dragInfo.cards = Array.from(document.querySelectorAll('.card')).filter(c => 
-                Math.abs(parseFloat(c.style.left) - dragInfo.origX) < 2 && parseFloat(c.style.top) >= dragInfo.origY
-            );
-        } else { dragInfo.cards = [el]; }
-        dragInfo.cards.forEach(c => { 
-            c.classList.add('dragging'); 
-            c.dataset.ox = parseFloat(c.style.left); 
-            c.dataset.oy = parseFloat(c.style.top); 
-        });
-        el.setPointerCapture(e.pointerId);
-    };
-
-    el.onpointermove = (e) => {
-        if(!dragInfo) return;
-        let dx = e.clientX - dragInfo.startX, dy = e.clientY - dragInfo.startY;
-        dragInfo.cards.forEach(c => { 
-            c.style.left = (parseFloat(c.dataset.ox) + dx) + 'px'; 
-            c.style.top = (parseFloat(c.dataset.oy) + dy) + 'px'; 
-        });
-    };
-
-    el.onpointerup = (e) => {
-        if(!dragInfo) return;
-        let dx = Math.abs(e.clientX - dragInfo.startX), dy = Math.abs(e.clientY - dragInfo.startY);
-        if(dx < 10 && dy < 10) {
-            for(let i=0; i<4; i++) if(isValidFoundation(dragInfo.info, i)) { executeFoundation(dragInfo.info, i); dragInfo=null; render(); return; }
-        }
-        const target = document.elementFromPoint(e.clientX, e.clientY);
-        const slot = target ? target.closest('.slot, .card') : null;
-        if(slot) {
-            let tx = Math.round(parseFloat(slot.style.left) / (cw + gap));
-            if(isValidMove(dragInfo.info, tx)) executeMove(dragInfo.info, tx);
-        }
-        dragInfo = null; render();
-    };
-}
-
-function isValidMove(src, tx) {
-    let card = getCard(src); if(!card || tx<0 || tx>6) return false;
-    let col = tab[tx];
-    if(col.length === 0) return card.r === 'K';
-    let top = col[col.length-1];
-    return (isRed(card) !== isRed(top)) && R.indexOf(card.r) === R.indexOf(top.r) - 1;
-}
-
-function isValidFoundation(src, fi) {
-    let card = getCard(src); if(!card) return false;
-    if(src.type === 'tab' && tab[src.x].length-1 !== src.y) return false;
-    let f = found[fi];
-    if(f.length === 0) return card.r === 'A';
-    let top = f[f.length-1];
-    return card.s === top.s && R.indexOf(card.r) === R.indexOf(top.r) + 1;
-}
-
-function executeMove(src, tx) {
-    let c = (src.type==='waste') ? [waste.pop()] : (src.type==='tab' ? tab[src.x].splice(src.y) : [found[src.i].pop()]);
-    tab[tx].push(...c); moves++; score+=5;
-    document.getElementById('score').textContent = score;
-    document.getElementById('moves').textContent = moves;
-}
-
-function executeFoundation(src, fi) {
-    let c = (src.type==='waste') ? waste.pop() : (src.type==='tab' ? tab[src.x].pop() : found[src.i].pop());
-    found[fi].push(c); moves++; score+=10;
-    document.getElementById('score').textContent = score;
-    document.getElementById('moves').textContent = moves;
-}
-
-function getCard(info) {
-    if(info.type==='waste') return waste[waste.length-1];
-    if(info.type==='tab') return tab[info.x][info.y];
-    if(info.type==='found') return found[info.i][found[info.i].length-1];
-}
-
-function isRed(c) { return c.s === '♥' || c.s === '♦'; }
-window.onresize = () => render();
 </script>
 </body>
 </html>
