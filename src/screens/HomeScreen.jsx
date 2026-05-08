@@ -10,12 +10,12 @@ return (
 <div style={S.root(tier.bg)}>
 <div style={S.page}>
 <div style={S.topNav}>
-<Btn icon="📊" color={tier.color} onClick={onCareer} label="Career" />
+<Btn icon="▲" color={tier.color} onClick={onCareer} label="Career" />
 <div style={S.rankPill(tier.color)}>
 <span>{tier.emoji}</span>
 <span style={{ fontWeight:800, letterSpacing:1 }}>{tier.label.toUpperCase()}</span>
 </div>
-<Btn icon="⚙" color={tier.color} onClick={onSettings} label="Instellingen" />
+<Btn icon="=" color={tier.color} onClick={onSettings} label="Instellingen" />
 </div>
 
 ```
