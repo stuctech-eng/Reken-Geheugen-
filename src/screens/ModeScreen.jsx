@@ -101,4 +101,4 @@ border: "1px solid " + (locked ? "#222" : color + "44"),
 display:"flex", alignItems:"center", justifyContent:"center",
 fontSize:16, fontWeight:900, color: locked ? "#444" : color,
 flexShrink:0,
-});
+}); 
