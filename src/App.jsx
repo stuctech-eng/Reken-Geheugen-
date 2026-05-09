@@ -1,20 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TIERS } from "./core/tiers.js";
 import { getTierIdx, checkPromotion, getDecayWarning, recentAcc } from "./core/career.js";
-import { loadSave, writeSave, dClone, dMerge, calcNewModuleLevel } from "./core/save.js";
-import HomeScreen    from "./screens/HomeScreen.jsx";
-import ModeScreen    from "./screens/ModeScreen.jsx";
-import GameScreen    from "./screens/GameScreen.jsx";
-import ResultScreen  from "./screens/ResultScreen.jsx";
-import CareerScreen  from "./screens/CareerScreen.jsx";
+import { DEFAULT_SAVE, dClone, dMerge, calcNewModuleLevel } from "./core/save.js";
+import { initAuth } from "./services/firebase.js";
+import { loadFromFirestore, saveToFirestore } from "./services/sync.js";
+import HomeScreen     from "./screens/HomeScreen.jsx";
+import ModeScreen     from "./screens/ModeScreen.jsx";
+import GameScreen     from "./screens/GameScreen.jsx";
+import ResultScreen   from "./screens/ResultScreen.jsx";
+import CareerScreen   from "./screens/CareerScreen.jsx";
 import SettingsScreen from "./screens/SettingsScreen.jsx";
 
 export default function App() {
-  const [save, setSave] = useState(loadSave);
-  const [screen, setScreen] = useState("home");
+  const [uid, setUid]         = useState(null);
+  const [save, setSave]       = useState(dClone(DEFAULT_SAVE));
+  const [loading, setLoading] = useState(true);
+  const [screen, setScreen]   = useState("home");
   const [selMode, setSelMode] = useState("classic");
   const [lastResult, setLastResult] = useState(null);
   const [promoAlert, setPromoAlert] = useState(null);
+
+  // ── Init: auth + load data ──────────────────────────────────
+  useEffect(() => {
+    initAuth()
+      .then(async (userId) => {
+        setUid(userId);
+        const data = await loadFromFirestore(userId);
+        setSave(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Auth failed:", err);
+        // Still load from localStorage if auth fails
+        try {
+          const local = localStorage.getItem("rg3_save");
+          if (local) setSave(dMerge(dClone(DEFAULT_SAVE), JSON.parse(local)));
+        } catch {}
+        setLoading(false);
+      });
+  }, []);
 
   const tierIdx   = getTierIdx(save.xp);
   const tier      = TIERS[tierIdx];
@@ -23,10 +47,17 @@ export default function App() {
   const decay     = getDecayWarning(save);
   const recAccVal = recentAcc(save);
 
+  // ── Save helper ─────────────────────────────────────────────
   function upSave(patch) {
-    setSave(prev => { const next = dMerge(dClone(prev), patch); writeSave(next); return next; });
+    setSave(prev => {
+      const next = dMerge(dClone(prev), patch);
+      if (uid) saveToFirestore(uid, next);
+      else localStorage.setItem("rg3_save", JSON.stringify(next));
+      return next;
+    });
   }
 
+  // ── Game finish ─────────────────────────────────────────────
   function handleFinish(result) {
     const modPatch = {};
     for (const [mod, data] of Object.entries(result.moduleBreakdown)) {
@@ -38,15 +69,19 @@ export default function App() {
         bestStreak: Math.max(prev.bestStreak || 0, data.streak || 0),
       };
     }
+
     // Update module level for practice sessions
     const mlPatch = {};
     if (result.isPractice && result.practiceModId) {
-      const currentLvl = save.moduleLevels?.[result.practiceModId] || 1;
-      mlPatch[result.practiceModId] = result.finalLevel || calcNewModuleLevel(currentLvl, result.accuracy);
+      mlPatch[result.practiceModId] = result.finalLevel
+        || calcNewModuleLevel(save.moduleLevels?.[result.practiceModId] || 1, result.accuracy);
     }
 
     const today = new Date().toISOString().slice(0, 10);
-    const hist = [...save.careerHistory, { date: Date.now(), accuracy: result.accuracy, xpGained: result.score.xp }].slice(-20);
+    const hist = [...save.careerHistory, {
+      date: Date.now(), accuracy: result.accuracy, xpGained: result.score.xp
+    }].slice(-20);
+
     const patch = {
       xp: save.xp + result.score.xp,
       coins: save.coins + result.score.coins,
@@ -56,22 +91,39 @@ export default function App() {
       currentStreak: result.endStreak,
       sessionsPlayed: save.sessionsPlayed + 1,
       moduleStats: modPatch,
+      moduleLevels: { ...(save.moduleLevels || {}), ...mlPatch },
       careerHistory: hist,
       lastPlayed: Date.now(),
       dailyDate: result.isDaily ? today : save.dailyDate,
-      moduleLevels: { ...(save.moduleLevels||{}), ...mlPatch },
       dailyDone: result.isDaily ? true : save.dailyDone,
     };
+
     setSave(prev => {
-      const next = dMerge(dClone(prev), patch); writeSave(next);
+      const next = dMerge(dClone(prev), patch);
+      // Save to Firestore + localStorage
+      if (uid) saveToFirestore(uid, next);
+      else localStorage.setItem("rg3_save", JSON.stringify(next));
+      // Check promotion
       const promo = checkPromotion(next);
       if (promo !== null && promo > getTierIdx(prev.xp)) setPromoAlert(TIERS[promo]);
       return next;
     });
+
     setLastResult(result);
     setScreen("result");
   }
 
+  // ── Loading screen ──────────────────────────────────────────
+  if (loading) {
+    return (
+      <div style={{ minHeight:"100dvh", background:"#080808", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:16 }}>
+        <div style={{ fontSize:36 }}>🧮</div>
+        <div style={{ color:"#4ade80", fontSize:14, fontFamily:"monospace", letterSpacing:2 }}>LADEN...</div>
+      </div>
+    );
+  }
+
+  // ── Screen router ────────────────────────────────────────────
   if (screen === "game")     return <GameScreen tierIdx={tierIdx} tier={tier} mode={selMode} save={save} onFinish={handleFinish} onBack={() => setScreen("mode")} />;
   if (screen === "result")   return <ResultScreen result={lastResult} tier={tier} save={save} promoAlert={promoAlert} onDismiss={() => setPromoAlert(null)} onHome={() => setScreen("home")} onReplay={() => setScreen("game")} />;
   if (screen === "mode")     return <ModeScreen tier={tier} tierIdx={tierIdx} save={save} onSelect={m => { setSelMode(m); setScreen("game"); }} onBack={() => setScreen("home")} />;
