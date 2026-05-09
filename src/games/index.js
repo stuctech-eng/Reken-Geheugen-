@@ -17,3 +17,16 @@ export const GAME_MODES = [
   { id:"brain",    label:"Brain Trainer",  icon:"🧠", desc:"Adaptive focus op zwakste module" },
   { id:"daily",    label:"Daily Challenge",icon:"🎯", desc:"10 vaste vragen van vandaag" },
 ];
+
+// Oefen modus — altijd zichtbaar, difficulty via module level
+export const PRACTICE_MODULES = [
+  { id:"practice_all", label:"Alles",            icon:"*",  modId:null,        unlockedAt:0 },
+  { id:"practice_plus",      label:"Optellen",        icon:"+",  modId:"plus",      unlockedAt:0 },
+  { id:"practice_minus",     label:"Aftrekken",       icon:"-",  modId:"minus",     unlockedAt:0 },
+  { id:"practice_tables",    label:"Tafels",          icon:"x",  modId:"tables",    unlockedAt:0 },
+  { id:"practice_multiply",  label:"Vermenigvuldigen",icon:"xx", modId:"multiply",  unlockedAt:1 },
+  { id:"practice_divide",    label:"Delen",           icon:"/",  modId:"divide",    unlockedAt:2 },
+  { id:"practice_percent",   label:"Procenten",       icon:"%",  modId:"percent",   unlockedAt:2 },
+  { id:"practice_fractions", label:"Breuken",         icon:"1/", modId:"fractions", unlockedAt:3 },
+  { id:"practice_decimals",  label:"Decimalen",       icon:",",  modId:"decimals",  unlockedAt:3 },
+];

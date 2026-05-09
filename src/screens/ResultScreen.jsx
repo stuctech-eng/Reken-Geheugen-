@@ -22,6 +22,14 @@ export default function ResultScreen({ result, tier, promoAlert, onDismiss, onHo
         <div style={{ textAlign:"center", marginBottom:16 }}>
           <div style={{ fontSize:48 }}>{g.e}</div>
           <div style={{ fontSize:22, fontWeight:900, color:tier.color, marginTop:6 }}>{g.l}</div>
+          {result.isPractice && result.practiceModId && result.finalLevel && (
+            <div style={{ fontSize:14, color:"#666", marginTop:6 }}>
+              Module level: <span style={{ color:tier.color, fontWeight:900 }}>Lvl {result.finalLevel}</span>
+            </div>
+          )}
+          {result.isPractice && (
+            <div style={{ fontSize:12, color:"#444", marginTop:4 }}>Oefen sessie — geen tijdsdruk</div>
+          )}
         </div>
 
         <div style={S.card(tier.color)}>

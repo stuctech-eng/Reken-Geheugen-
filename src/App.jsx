@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { TIERS } from "./core/tiers.js";
 import { getTierIdx, checkPromotion, getDecayWarning, recentAcc } from "./core/career.js";
-import { loadSave, writeSave, dClone, dMerge } from "./core/save.js";
+import { loadSave, writeSave, dClone, dMerge, calcNewModuleLevel } from "./core/save.js";
 import HomeScreen    from "./screens/HomeScreen.jsx";
 import ModeScreen    from "./screens/ModeScreen.jsx";
 import GameScreen    from "./screens/GameScreen.jsx";
@@ -38,6 +38,13 @@ export default function App() {
         bestStreak: Math.max(prev.bestStreak || 0, data.streak || 0),
       };
     }
+    // Update module level for practice sessions
+    const mlPatch = {};
+    if (result.isPractice && result.practiceModId) {
+      const currentLvl = save.moduleLevels?.[result.practiceModId] || 1;
+      mlPatch[result.practiceModId] = result.finalLevel || calcNewModuleLevel(currentLvl, result.accuracy);
+    }
+
     const today = new Date().toISOString().slice(0, 10);
     const hist = [...save.careerHistory, { date: Date.now(), accuracy: result.accuracy, xpGained: result.score.xp }].slice(-20);
     const patch = {
@@ -52,6 +59,7 @@ export default function App() {
       careerHistory: hist,
       lastPlayed: Date.now(),
       dailyDate: result.isDaily ? today : save.dailyDate,
+      moduleLevels: { ...(save.moduleLevels||{}), ...mlPatch },
       dailyDone: result.isDaily ? true : save.dailyDone,
     };
     setSave(prev => {
