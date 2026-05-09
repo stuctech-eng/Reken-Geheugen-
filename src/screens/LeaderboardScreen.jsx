@@ -155,7 +155,7 @@ const tabRow = {
 const tabBtn = (active, color) => ({
   flex:1, padding:"10px 4px", borderRadius:12,
   background: active ? color + "22" : "#ffffff08",
-  border: `1px solid ${active ? color + "66" : "#222"}`,
+  border: "1px solid " + (active ? color + "66" : "#222"),
   color: active ? color : "#555",
   fontWeight: active ? 800 : 500,
   fontSize:13, cursor:"pointer",
@@ -166,7 +166,7 @@ const modTabRow = {
 const modTabBtn = (active, color) => ({
   flexShrink:0, padding:"6px 12px", borderRadius:999,
   background: active ? color + "22" : "#ffffff08",
-  border: `1px solid ${active ? color + "44" : "#222"}`,
+  border: "1px solid " + (active ? color + "44" : "#222"),
   color: active ? color : "#555",
   fontWeight: active ? 700 : 400,
   fontSize:12, cursor:"pointer", whiteSpace:"nowrap",
@@ -174,13 +174,13 @@ const modTabBtn = (active, color) => ({
 const myCard = (color) => ({
   display:"flex", justifyContent:"space-between", alignItems:"center",
   background: color + "12",
-  border: `1px solid ${color}33`,
+  border: "1px solid " + color + "33",
   borderRadius:14, padding:"12px 16px",
 });
 const rowCard = (isMe, color) => ({
   display:"flex", alignItems:"center", gap:12,
   background: isMe ? color + "12" : "#ffffff07",
-  border: `1px solid ${isMe ? color + "44" : "#1a1a1a"}`,
+  border: "1px solid " + (isMe ? color + "44" : "#1a1a1a"),
   borderRadius:14, padding:"12px 14px",
 });
 const rankCol = (i) => ({

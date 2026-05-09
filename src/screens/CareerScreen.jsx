@@ -36,7 +36,7 @@ export default function CareerScreen({ save, tier, tierIdx, tierProg, nextTier, 
         <div style={{ width:"100%" }}>
           <div style={{ fontSize:11, color:"#444", marginBottom:8, textTransform:"uppercase", letterSpacing:1 }}>Career Ladder</div>
           {TIERS.map((t, i) => (
-            <div key={t.id} style={{ display:"flex", gap:12, alignItems:"center", padding:"10px 12px", borderRadius:12, marginBottom:6, background:i===tierIdx?t.color+"15":"#ffffff06", border:`1px solid ${i===tierIdx?t.color+"44":i<tierIdx?t.color+"22":"#1a1a1a"}` }}>
+            <div key={t.id} style={{ display:"flex", gap:12, alignItems:"center", padding:"10px 12px", borderRadius:12, marginBottom:6, background:i===tierIdx?t.color+"15":"#ffffff06", border:"1px solid "+(i===tierIdx?t.color+"44":i<tierIdx?t.color+"22":"#1a1a1a") }}>
               <span style={{ fontSize:16 }}>{t.emoji}</span>
               <div style={{ flex:1 }}>
                 <div style={{ fontWeight:700, color:i<=tierIdx?t.color:"#444" }}>{t.label}</div>

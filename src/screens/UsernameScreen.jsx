@@ -75,7 +75,7 @@ const inputStyle = (color, hasError) => ({
   width: "100%",
   padding: "16px 18px",
   background: "#ffffff08",
-  border: `2px solid ${hasError ? "#f87171" : color + "44"}`,
+  border: "2px solid " + (hasError ? "#f87171" : color + "44"),
   borderRadius: 16,
   color: "#fff",
   fontSize: 22,

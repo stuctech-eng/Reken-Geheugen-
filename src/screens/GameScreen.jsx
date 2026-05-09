@@ -223,7 +223,7 @@ export default function GameScreen({ tierIdx, tier, mode, save, onFinish, onBack
 
         {/* Level up message */}
         {levelUpMsg && (
-          <div style={{ textAlign:"center", background:modColor+"22", border:`1px solid ${modColor}44`, borderRadius:12, padding:"8px", color:modColor, fontWeight:800, fontSize:14 }}>
+          <div style={{ textAlign:"center", background:modColor+"22", border:"1px solid "+modColor+"44", borderRadius:12, padding:"8px", color:modColor, fontWeight:800, fontSize:14 }}>
             {levelUpMsg}
           </div>
         )}
