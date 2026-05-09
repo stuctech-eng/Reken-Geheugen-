@@ -18,7 +18,7 @@ return (
 <Btn icon="=" color={tier.color} onClick={onSettings} label="Instellingen" />
 </div>
 
-```
+
     <div style={{ textAlign:"center", padding:"8px 0" }}>
       <h1 style={S.heroTitle}>Reken<br/>Geheugen</h1>
       <p style={{ color:"#444", fontSize:13, margin:"4px 0 0" }}>{tier.desc}</p>
@@ -52,7 +52,7 @@ return (
     </div>
   </div>
 </div>
-```
+
 
 );
 }
