@@ -14,7 +14,7 @@ return (
 <h2 style={S.title(tier.color)}>Kies Modus</h2>
 <p style={{ color:"#555", fontSize:13, margin:"-6px 0 4px" }}>{tier.emoji} {tier.label} niveau</p>
 
-```
+
     <div style={sectionLabel}>Game Modi</div>
     <div style={S.grid2}>
       {GAME_MODES.map(function(m) {
@@ -82,7 +82,6 @@ return (
     </div>
   </div>
 </div>
-```
 
 );
 }
