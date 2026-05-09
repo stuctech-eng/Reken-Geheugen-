@@ -15,13 +15,12 @@ return (
 <p style={{ color:"#555", fontSize:13, margin:"-6px 0 4px" }}>{tier.emoji} {tier.label} niveau</p>
 
 ```
-    {/* ── GAME MODI ── */}
-    <div style={sectionLabel}>🎮 Game Modi</div>
+    <div style={sectionLabel}>Game Modi</div>
     <div style={S.grid2}>
-      {GAME_MODES.map(m => {
-        const locked = m.id === "daily" && dailyDone;
+      {GAME_MODES.map(function(m) {
+        var locked = m.id === "daily" && dailyDone;
         return (
-          <button key={m.id} style={S.modeCard(tier.color, locked)} onClick={() => !locked && onSelect(m.id)} disabled={locked}>
+          <button key={m.id} style={S.modeCard(tier.color, locked)} onClick={function() { if (!locked) onSelect(m.id); }} disabled={locked}>
             <div style={{ fontSize:26, marginBottom:5 }}>{m.icon}</div>
             <div style={{ fontWeight:800, fontSize:14 }}>{m.label}</div>
             <div style={{ fontSize:11, color:"#777", marginTop:3, lineHeight:1.4 }}>{m.desc}</div>
@@ -31,43 +30,52 @@ return (
       })}
     </div>
 
-    {/* ── OEFENEN ── */}
-    <div style={sectionLabel}>📚 Oefenen</div>
+    <div style={sectionLabel}>Oefenen</div>
     <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-      {PRACTICE_MODULES.map(pm => {
-        const locked = false; // Oefen modus altijd vrij
-        const level = pm.modId ? (moduleLevels[pm.modId] || 1) : null;
-        const modColor = pm.modId ? (MATH_MODULES[pm.modId]?.color || tier.color) : tier.color;
-        const stats = pm.modId ? save.moduleStats?.[pm.modId] : null;
-        const acc = stats?.total > 0 ? Math.round(stats.correct / stats.total * 100) : null;
+      {PRACTICE_MODULES.map(function(pm) {
+        var modColor = pm.modId ? (MATH_MODULES[pm.modId] ? MATH_MODULES[pm.modId].color : tier.color) : tier.color;
+        var level = pm.modId ? (moduleLevels[pm.modId] || 1) : null;
+        var stats = pm.modId ? (save.moduleStats ? save.moduleStats[pm.modId] : null) : null;
+        var acc = stats && stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : null;
+        var accColor = acc === null ? "#555" : acc >= 80 ? "#4ade80" : acc >= 60 ? "#fbbf24" : "#f87171";
 
         return (
           <button
             key={pm.id}
-            style={practiceCard(modColor, locked)}
-            onClick={() => !locked && onSelect(pm.id)}
-            disabled={locked}
+            style={{
+              display:"flex", justifyContent:"space-between", alignItems:"center",
+              background:"#ffffff0a",
+              border:"1px solid " + modColor + "33",
+              borderRadius:16, padding:"14px 16px",
+              cursor:"pointer",
+              WebkitTapHighlightColor:"transparent",
+            }}
+            onClick={function() { onSelect(pm.id); }}
           >
-            {/* Left: icon + label */}
             <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-              <div style={iconBox(modColor, locked)}>{pm.icon}</div>
+              <div style={{
+                width:40, height:40, borderRadius:12,
+                background:modColor + "22",
+                border:"1px solid " + modColor + "44",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:16, fontWeight:900, color:modColor,
+                flexShrink:0,
+              }}>
+                {pm.icon}
+              </div>
               <div style={{ textAlign:"left" }}>
-                <div style={{ fontWeight:800, fontSize:15, color: locked ? "#444" : "#fff" }}>{pm.label}</div>
-                <div style={{ fontSize:11, color:"#666" }}>Geen tijdsdruk -- vrij oefenen</div>
+                <div style={{ fontWeight:800, fontSize:15, color:"#fff" }}>{pm.label}</div>
+                <div style={{ fontSize:11, color:"#666" }}>Geen tijdsdruk</div>
               </div>
             </div>
-
-            {/* Right: level + accuracy */}
-            {!locked && (
-              <div style={{ textAlign:"right" }}>
-                {level !== null && (
-                  <div style={{ color: modColor, fontWeight:900, fontSize:16 }}>Lvl {level}</div>
-                )}
-                {acc !== null && (
-                  <div style={{ fontSize:11, color: acc >= 80 ? "#4ade80" : acc >= 60 ? "#fbbf24" : "#f87171" }}>{acc}%</div>
-                )}
-              </div>
-            )}
+            <div style={{ textAlign:"right" }}>
+              {level !== null && (
+                <div style={{ color:modColor, fontWeight:900, fontSize:16 }}>Lvl {level}</div>
+              )}
+              {acc !== null && (
+                <div style={{ fontSize:11, color:accColor }}>{acc}%</div>
+              )}
+            </div>
           </button>
         );
       })}
@@ -79,26 +87,7 @@ return (
 );
 }
 
-const sectionLabel = {
+var sectionLabel = {
 fontSize:11, color:"#555", textTransform:"uppercase",
 letterSpacing:1.5, marginTop:4, marginBottom:2,
 };
-
-const practiceCard = (color, locked) => ({
-display:"flex", justifyContent:"space-between", alignItems:"center",
-background: locked ? "#ffffff05" : "#ffffff0a",
-border: "1px solid " + (locked ? "#1a1a1a" : color + "33"),
-borderRadius:16, padding:"14px 16px",
-cursor: locked ? "default" : "pointer",
-opacity: locked ? 0.5 : 1,
-WebkitTapHighlightColor:"transparent",
-});
-
-const iconBox = (color, locked) => ({
-width:40, height:40, borderRadius:12,
-background: locked ? "#ffffff08" : color + "22",
-border: "1px solid " + (locked ? "#222" : color + "44"),
-display:"flex", alignItems:"center", justifyContent:"center",
-fontSize:16, fontWeight:900, color: locked ? "#444" : color,
-flexShrink:0,
-}); 
