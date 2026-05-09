@@ -10,18 +10,18 @@ return (
 <div style={S.root(tier.bg)}>
 <div style={S.page}>
 <div style={S.topNav}>
-<Btn icon="▲" color={tier.color} onClick={onCareer} label="Career" />
+<Btn icon="A" color={tier.color} onClick={onCareer} label="Career" />
 <div style={S.rankPill(tier.color)}>
 <span>{tier.emoji}</span>
 <span style={{ fontWeight:800, letterSpacing:1 }}>{tier.label.toUpperCase()}</span>
 </div>
 <div style={{ display:"flex", gap:8 }}>
 <Btn icon="#" color={tier.color} onClick={onLeaderboard} label="Leaderboard" />
-<Btn icon="=" color={tier.color} onClick={onSettings} label="Instellingen" />
+<Btn icon="S" color={tier.color} onClick={onSettings} label="Instellingen" />
 </div>
 </div>
 
-```
+
     <div style={{ textAlign:"center", padding:"8px 0" }}>
       <h1 style={S.heroTitle}>Reken<br/>Geheugen</h1>
       <p style={{ color:"#444", fontSize:13, margin:"4px 0 0" }}>{tier.desc}</p>
@@ -31,31 +31,40 @@ return (
       <div style={{ ...S.row, marginBottom:8 }}>
         <span style={{ color:tier.color, fontWeight:900 }}>{save.xp} XP</span>
         {nextTier
-          ? <span style={{ color:"#555", fontSize:12 }}>→ {nextTier.label} @ {nextTier.xpMin} XP</span>
-          : <span style={{ color:tier.color, fontSize:12 }}>MAX LEVEL ★</span>}
+          ? <span style={{ color:"#555", fontSize:12 }}>naar {nextTier.label} @ {nextTier.xpMin} XP</span>
+          : <span style={{ color:tier.color, fontSize:12 }}>MAX LEVEL</span>}
       </div>
       <Bar pct={tierProg} color={tier.color} />
-      {nextTier && <div style={{ fontSize:11, color:"#444", marginTop:5 }}>Vereist: ≥{nextTier.requiredAccuracy}% acc · {nextTier.minQuestions} vragen</div>}
+      {nextTier && (
+        <div style={{ fontSize:11, color:"#444", marginTop:5 }}>
+          Vereist: {nextTier.requiredAccuracy}% acc en {nextTier.minQuestions} vragen
+        </div>
+      )}
     </div>
 
-    {decay && <div style={S.warn}>⚠️ Skill Decay Warning -- 3+ dagen niet geoefend!</div>}
+    {decay && (
+      <div style={S.warn}>
+        Skill Decay Warning - 3+ dagen niet geoefend!
+      </div>
+    )}
 
     <div style={S.grid4}>
       <Stat label="Nauwkeurig" value={acc + "%"} color={tier.color} />
-      <Stat label="Best Streak" value={save.bestStreak + "🔥"} color={tier.color} />
+      <Stat label="Best Streak" value={save.bestStreak + "x"} color={tier.color} />
       <Stat label="Sessies" value={save.sessionsPlayed} color={tier.color} />
-      <Stat label="Coins" value={save.coins + "🪙"} color={tier.color} />
+      <Stat label="Coins" value={save.coins} color={tier.color} />
     </div>
 
     <button style={S.playBtn(tier.color)} onClick={onPlay}>SPELEN</button>
 
     <div style={S.dailyRow(dailyDone)}>
-      <span>🎯 Daily Challenge</span>
-      <span style={{ color:dailyDone?"#4ade80":"#555", fontSize:13 }}>{dailyDone?"✓ Voltooid":"Nog te doen"}</span>
+      <span>Daily Challenge</span>
+      <span style={{ color:dailyDone?"#4ade80":"#555", fontSize:13 }}>
+        {dailyDone ? "Voltooid" : "Nog te doen"}
+      </span>
     </div>
   </div>
 </div>
-```
 
 );
 }
