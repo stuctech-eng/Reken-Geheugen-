@@ -94,8 +94,8 @@ export default function LeaderboardScreen({ uid, tier, save, onBack }) {
         <div style={myCard(tier.color)}>
           <span style={{ color:"#555", fontSize:13 }}>Jouw positie</span>
           <span style={{ color:tier.color, fontWeight:900, fontSize:18 }}>
-            {tab === "global" && myRank ? `#${myRank}` : "—"}
-            {tab === "modules" ? `Lvl ${save.moduleLevels?.[modTab] || 1}` : ""}
+            {tab === "global" && myRank ? "#" + myRank : "—"}
+            {tab === "modules" ? "Lvl " + (save.moduleLevels?.[modTab] || 1) : ""}
             {tab === "daily" ? "Speel Daily!" : ""}
           </span>
           <span style={{ color:"#666", fontSize:13 }}>{displayName}</span>
@@ -114,7 +114,7 @@ export default function LeaderboardScreen({ uid, tier, save, onBack }) {
               <div key={row.uid} style={rowCard(isMe(row), tier.color)}>
                 {/* Rank */}
                 <div style={rankCol(i)}>
-                  {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${row.rank}`}
+                  {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "#" + row.rank}
                 </div>
 
                 {/* Name */}

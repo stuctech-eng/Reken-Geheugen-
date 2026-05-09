@@ -9,8 +9,8 @@ export default {
     const rawNum = n1 + n2;
     const g = gcd(rawNum, d);
     const ansNum = rawNum / g, ansDen = d / g;
-    const ansStr = ansDen === 1 ? `${ansNum}` : `${ansNum}/${ansDen}`;
-    return { a: `${n1}/${d}`, b: `${n2}/${d}`, op: "+", answer: ansStr, module: "fractions",
-      display: `${n1}/${d} + ${n2}/${d}`, isFraction: true, rawNum, rawDen: d };
+    const ansStr = ansDen === 1 ? String(ansNum) : ansNum + "/" + ansDen;
+    return { a: n1 + "/" + d, b: n2 + "/" + d, op: "+", answer: ansStr, module: "fractions",
+      display: n1 + "/" + d + " + " + n2 + "/" + d, isFraction: true, rawNum, rawDen: d };
   },
 };

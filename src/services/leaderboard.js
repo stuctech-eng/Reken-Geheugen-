@@ -47,7 +47,7 @@ export async function updateGlobalLeaderboard(uid, displayName, xp, tierLabel) {
 // Update module leaderboard
 export async function updateModuleLeaderboard(uid, displayName, modId, level, accuracy) {
   try {
-    await setDoc(doc(db, `leaderboard_modules_${modId}`, uid), {
+    await setDoc(doc(db, "leaderboard_modules_" + modId, uid), {
       displayName, level, accuracy,
       updatedAt: serverTimestamp(),
     }, { merge: true });
@@ -60,7 +60,7 @@ export async function updateModuleLeaderboard(uid, displayName, modId, level, ac
 export async function updateDailyLeaderboard(uid, displayName, score) {
   const today = new Date().toISOString().slice(0, 10);
   try {
-    const ref = doc(db, `leaderboard_daily_${today}`, uid);
+    const ref = doc(db, "leaderboard_daily_" + today, uid);
     const snap = await getDoc(ref);
     // Only update if new score is higher
     if (!snap.exists() || snap.data().score < score) {
@@ -86,7 +86,7 @@ export async function fetchGlobalTop10() {
 
 export async function fetchModuleTop10(modId) {
   try {
-    const q = query(collection(db, `leaderboard_modules_${modId}`), orderBy("level", "desc"), orderBy("accuracy", "desc"), limit(10));
+    const q = query(collection(db, "leaderboard_modules_" + modId), orderBy("level", "desc"), orderBy("accuracy", "desc"), limit(10));
     const snap = await getDocs(q);
     return snap.docs.map((d, i) => ({ rank: i + 1, uid: d.id, ...d.data() }));
   } catch (err) {
@@ -98,7 +98,7 @@ export async function fetchModuleTop10(modId) {
 export async function fetchDailyTop10() {
   const today = new Date().toISOString().slice(0, 10);
   try {
-    const q = query(collection(db, `leaderboard_daily_${today}`), orderBy("score", "desc"), limit(10));
+    const q = query(collection(db, "leaderboard_daily_" + today), orderBy("score", "desc"), limit(10));
     const snap = await getDocs(q);
     return snap.docs.map((d, i) => ({ rank: i + 1, uid: d.id, ...d.data() }));
   } catch (err) {

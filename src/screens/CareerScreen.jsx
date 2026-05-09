@@ -27,10 +27,10 @@ export default function CareerScreen({ save, tier, tierIdx, tierProg, nextTier, 
         </div>
 
         <div style={S.grid2}>
-          <KPI label="Nauwkeurigheid" value={`${acc}%`} target={nextTier?`≥${nextTier.requiredAccuracy}%`:"MAX"} ok={!nextTier||acc>=(nextTier?.requiredAccuracy||0)} color={tier.color} />
-          <KPI label="Vragen gespeeld" value={save.totalQuestions} target={nextTier?`≥${nextTier.minQuestions}`:"MAX"} ok={!nextTier||save.totalQuestions>=(nextTier?.minQuestions||0)} color={tier.color} />
-          <KPI label="Recente acc." value={`${Math.round(recAccVal)}%`} target="Laatste 5 sessies" ok={recAccVal>=70} color={tier.color} />
-          <KPI label="Beste Streak" value={`${save.bestStreak}🔥`} target="" ok={true} color={tier.color} />
+          <KPI label="Nauwkeurigheid" value={acc + "%"} target={nextTier ? "≥" + nextTier.requiredAccuracy + "%" : "MAX"} ok={!nextTier||acc>=(nextTier?.requiredAccuracy||0)} color={tier.color} />
+          <KPI label="Vragen gespeeld" value={save.totalQuestions} target={nextTier ? "≥" + nextTier.minQuestions : "MAX"} ok={!nextTier||save.totalQuestions>=(nextTier?.minQuestions||0)} color={tier.color} />
+          <KPI label="Recente acc." value={Math.round(recAccVal) + "%"} target="Laatste 5 sessies" ok={recAccVal>=70} color={tier.color} />
+          <KPI label="Beste Streak" value={save.bestStreak + "🔥"} target="" ok={true} color={tier.color} />
         </div>
 
         <div style={{ width:"100%" }}>

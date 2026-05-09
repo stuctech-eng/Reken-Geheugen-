@@ -9,6 +9,6 @@ export default {
     ];
     const [p, base] = combos[Math.floor(Math.random() * combos.length)];
     const ans = Math.round(p / 100 * base);
-    return { a: p, b: base, op: "%", answer: ans, module: "percent", display: `${p}% van ${base}` };
+    return { a: p, b: base, op: "%", answer: ans, module: "percent", display: p + "% van " + base };
   },
 };

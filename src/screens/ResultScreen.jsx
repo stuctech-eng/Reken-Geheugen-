@@ -35,9 +35,9 @@ export default function ResultScreen({ result, tier, promoAlert, onDismiss, onHo
         <div style={S.card(tier.color)}>
           <div style={{ fontSize:11, color:"#555", marginBottom:8, textTransform:"uppercase", letterSpacing:1 }}>Score Breakdown</div>
           <SRow label="Nauwkeurigheid" value={result.score.accScore} color={tier.color} />
-          <SRow label="Snelheidsbonus" value={`+${result.score.speed}`} color="#60a5fa" />
-          <SRow label={`Combo ×${result.score.combo}`} value={`×${result.score.combo}`} color="#fbbf24" />
-          <SRow label="Niveau bonus" value={`+${result.score.diff}`} color="#c084fc" />
+          <SRow label="Snelheidsbonus" value={"+" + result.score.speed} color="#60a5fa" />
+          <SRow label={"Combo ×" + result.score.combo} value={"×" + result.score.combo} color="#fbbf24" />
+          <SRow label="Niveau bonus" value={"+" + result.score.diff} color="#c084fc" />
           <div style={{ borderTop:"1px solid #222", marginTop:8, paddingTop:8, ...S.row }}>
             <span style={{ color:"#666" }}>Totaal</span>
             <span style={{ color:tier.color, fontWeight:900, fontSize:18 }}>{result.score.raw} pts</span>
@@ -45,12 +45,12 @@ export default function ResultScreen({ result, tier, promoAlert, onDismiss, onHo
         </div>
 
         <div style={S.grid3}>
-          <RStat label="Nauwkeurig" value={`${result.accuracy}%`} color={tier.color} />
-          <RStat label="Goed/Totaal" value={`${result.correct}/${result.total}`} color={tier.color} />
-          <RStat label="XP" value={`+${result.score.xp}`} color="#fbbf24" />
-          <RStat label="Coins" value={`+${result.score.coins}🪙`} color="#fbbf24" />
-          <RStat label="Beste Streak" value={`${result.bestStreak}🔥`} color={tier.color} />
-          <RStat label="Gem. tijd" value={`${(result.avgMs/1000).toFixed(1)}s`} color={tier.color} />
+          <RStat label="Nauwkeurig" value={result.accuracy + "%"} color={tier.color} />
+          <RStat label="Goed/Totaal" value={result.correct + "/" + result.total} color={tier.color} />
+          <RStat label="XP" value={"+" + result.score.xp} color="#fbbf24" />
+          <RStat label="Coins" value={"+" + result.score.coins + "🪙"} color="#fbbf24" />
+          <RStat label="Beste Streak" value={result.bestStreak + "🔥"} color={tier.color} />
+          <RStat label="Gem. tijd" value={(result.avgMs/1000).toFixed(1) + "s"} color={tier.color} />
         </div>
 
         {Object.keys(result.moduleBreakdown).length > 1 && (

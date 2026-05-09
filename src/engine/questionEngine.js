@@ -30,11 +30,11 @@ export function buildChoices(correct, tierIdx, q) {
       const n = rightNum + off;
       if (n <= 0) continue;
       const g = gcd(n, d);
-      const str = (d / g) === 1 ? String(n / g) : `${n / g}/${d / g}`;
+      const str = (d / g) === 1 ? String(n / g) : (n / g) + "/" + (d / g);
       if (str !== correct) candidates.add(str);
     }
     let extra = 1;
-    while (candidates.size < 4) { candidates.add(`${rightNum + extra * 3}/${d}`); extra++; }
+    while (candidates.size < 4) { candidates.add((rightNum + extra * 3) + "/" + d); extra++; }
     return [...candidates].sort(() => Math.random() - 0.5);
   }
   // DECIMALS
